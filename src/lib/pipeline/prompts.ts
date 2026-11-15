@@ -7,7 +7,8 @@ const cache = new Map<string, Promise<string>>();
 function read(rel: string): Promise<string> {
   let p = cache.get(rel);
   if (!p) {
-    p = fs.readFile(path.join(process.cwd(), rel), "utf8");
+    // Statically scoped to prompts/ so the bundler does not trace the whole project.
+    p = fs.readFile(path.join(process.cwd(), "prompts", rel.replace(/^prompts\//, "")), "utf8");
     cache.set(rel, p);
   }
   return p;
