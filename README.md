@@ -12,9 +12,27 @@ questions in [QUESTIONS.md](QUESTIONS.md).
 ## Eval
 
 <!-- EVAL:START -->
-**Not run yet.** Waiting for the 30 labelled questions
-(`eval/questions.jsonl`) and an API key for a live run. V0 is not done
-until this table holds a live-mode result. See [eval/README.md](eval/README.md).
+> **Mock baseline, not a quality result.** Keyword classifier and template answers stand in for the models; retrieval, rules and the gate are real. The live run replaces this table once an API key is set.
+
+Run: 2026-11-15, mock mode, 30 questions (`questions.jsonl`)
+
+| Metric | Result |
+|---|---|
+| Routing accuracy | 96.7% (29/30) |
+| Citation presence (answered with ≥1 valid citation) | 100.0% (26/26) |
+| In-scope questions given a cited answer | 100.0% (26/26) |
+| Expected source retrieved (recall@k) | 90.0% (18/20) |
+| Expected-citation hit rate | 70.0% (14/20) |
+| Escalation agreement | 90.0% (27/30) |
+| Auto-handled (answered, not escalated) | 63.3% (19/30) |
+| Overall accuracy | 70.0% (21/30) |
+
+| Confidence band | Questions | Accuracy |
+|---|---|---|
+| Low (0.0–0.4) | 4 | 100.0% (4/4) |
+| Guarded (0.4–0.6) | 0 | n/a |
+| Moderate (0.6–0.8) | 5 | 20.0% (1/5) |
+| High (0.8–1.0) | 21 | 76.2% (16/21) |
 <!-- EVAL:END -->
 
 ## Run it

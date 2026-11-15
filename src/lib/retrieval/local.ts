@@ -18,6 +18,8 @@ import {
  * are skipped. Invalid files are skipped with a warning that names the file,
  * never any user text.
  */
+const LOCAL_BOOST = 1.6;
+
 export class LocalFileRetriever implements Retriever {
   private indexes = new Map<DomainId, Promise<BM25<SourceDocument>>>();
 
@@ -29,10 +31,14 @@ export class LocalFileRetriever implements Retriever {
   async search({ text, domain, k, context }: RetrievalQuery): Promise<Passage[]> {
     const index = await this.index(domain);
     const ctx = context ?? emptyContext;
+    // Law specific to the user's state or city is preferred over general law,
+    // so it is boosted after filtering (it already applies, by construction).
     return index
-      .search(text, k, (d) => applies(d.meta, ctx))
+      .search(text, k * 3, (d) => applies(d.meta, ctx))
+      .map((r) => ({ doc: r.item, score: r.item.meta.jurisdiction === "central" ? r.score : r.score * LOCAL_BOOST }))
       .filter((r) => r.score >= this.minScore)
-      .map((r) => ({ doc: r.item, score: r.score }));
+      .sort((a, b) => b.score - a.score)
+      .slice(0, k);
   }
 
   async documents(domain: DomainId): Promise<SourceDocument[]> {

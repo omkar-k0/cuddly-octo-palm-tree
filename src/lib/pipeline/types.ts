@@ -39,6 +39,8 @@ export interface Classification {
   confidence: number;
   /** When and where, as read from the text. */
   context: QueryContext;
+  /** Legal terms to add to the search (live classifier only). */
+  search_terms: string[];
 }
 
 export type MissingContext = "event_date" | "state";

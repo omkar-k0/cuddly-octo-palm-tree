@@ -7,7 +7,7 @@ section: "Section 27"
 source_url: https://indiacode.gov.in/handle/123456789/531407
 verified: false
 last_checked: 2026-11-15
-keywords: ["non-compete","restraint of trade","bond","employment agreement"]
+keywords: ["non-compete","restraint of trade","bond","employment agreement","competitor","join a competitor","after leaving","offer letter","enforceable","restriction"]
 jurisdiction: central
 provenance: indiacode
 act_id: AC_CEN_3_20_00035_187209_1523268996428

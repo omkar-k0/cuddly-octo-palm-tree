@@ -23,7 +23,13 @@ describe("looksCriminal", () => {
     expect(looksCriminal("my employer filed an FIR against me")).toBe(true);
     expect(looksCriminal("the cheque bounced and he sent a notice")).toBe(true);
   });
+  it("flags harassment with contact, hacking and self-help eviction", () => {
+    expect(looksCriminal("my manager touched me at the office party")).toBe(true);
+    expect(looksCriminal("my Instagram account got hacked")).toBe(true);
+    expect(looksCriminal("the landlord changed the locks while I was away")).toBe(true);
+  });
   it("does not flag a plain wage question", () => {
     expect(looksCriminal("my salary has not been paid for two months")).toBe(false);
+    expect(looksCriminal("HR asked me to get in touch with them about my notice period")).toBe(false);
   });
 });

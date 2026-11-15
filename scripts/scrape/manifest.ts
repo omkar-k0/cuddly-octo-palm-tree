@@ -40,7 +40,7 @@ export const manifest: ManifestEntry[] = [
   // sources/employment/ with effective_until: 2025-11-20. See QUESTIONS.md.
   // ── 02 Employment: unaffected by the Codes ─────────────────────────────
   { domain: "employment", act: "The Sexual Harassment of Women at Workplace (Prevention, Prohibition and Redressal) Act, 2013", sections: ["3", "4", "9", "11", "13", "19"], keywords: ["posh", "sexual harassment", "internal committee", "workplace", "complaint"] },
-  { domain: "employment", act: "The Indian Contract Act, 1872", sections: ["27"], keywords: ["non-compete", "restraint of trade", "bond", "employment agreement"] },
+  { domain: "employment", act: "The Indian Contract Act, 1872", sections: ["27"], keywords: ["non-compete", "restraint of trade", "bond", "employment agreement", "competitor", "join a competitor", "after leaving", "offer letter", "enforceable", "restriction"] },
 
   // ── 01 Corporate ───────────────────────────────────────────────────────
   { domain: "corporate", act: "The Companies Act, 2013", sections: ["7", "149", "166", "168", "241", "242", "244"], keywords: ["company", "director", "shareholder", "oppression", "mismanagement", "board", "incorporation"] },

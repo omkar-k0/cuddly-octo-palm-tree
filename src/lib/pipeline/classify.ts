@@ -18,6 +18,7 @@ const ClassifierOutput = z.object({
   event_date: z.string().nullable(),
   state: z.string().nullable(),
   local: z.string().nullable(),
+  search_terms: z.array(z.string()),
 });
 
 function taxonomyBlock(): string {
@@ -63,6 +64,7 @@ export async function classifyLive(
       state: normaliseState(out.state),
       local: out.local?.trim() || null,
     },
+    search_terms: out.search_terms.slice(0, 8),
   });
 }
 
@@ -88,6 +90,7 @@ export function classifyMock(text: string, opts: { hint?: DomainId; today?: stri
     deadline_days: null,
     confidence: route === OUT_OF_SCOPE ? 0.5 : clamp01(0.5 + 0.1 * margin),
     context: emptyContext,
+    search_terms: [],
   });
 }
 

@@ -33,7 +33,9 @@ const flag = (name: string) => process.argv.includes(`--${name}`);
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 const normSection = (s: string) => norm(s.replace(/^(section|sec\.?|s\.)\s*/i, ""));
 
-export function citationMatches(expected: Item["expected_citations"][number], got: Citation): boolean {
+type Ref = { act?: string | null; section?: string | null; case?: string | null };
+
+export function citationMatches(expected: Item["expected_citations"][number], got: Ref): boolean {
   if ("case" in expected) return !!got.case && norm(got.case).includes(norm(expected.case));
   if (!got.act || !norm(got.act).includes(norm(expected.act))) return false;
   if (!expected.section) return true;
@@ -48,6 +50,8 @@ interface Row {
   routing_ok: boolean;
   escalate_ok: boolean;
   citation_hit: boolean | null;
+  /** Was an expected source among the retrieved passages at all? */
+  retrieval_hit: boolean | null;
   correct: boolean;
 }
 
@@ -95,6 +99,9 @@ async function main() {
           const citation_hit = item.expected_citations.length
             ? item.expected_citations.some((e) => response.citations.some((c) => citationMatches(e, c)))
             : null;
+          const retrieval_hit = item.expected_citations.length
+            ? item.expected_citations.some((e) => trace.retrieved_refs.some((r) => citationMatches(e, r)))
+            : null;
           rows[i] = {
             item,
             response,
@@ -102,10 +109,11 @@ async function main() {
             routing_ok,
             escalate_ok,
             citation_hit,
+            retrieval_hit,
             correct: routing_ok && escalate_ok && citation_hit !== false,
           };
         } catch (e) {
-          rows[i] = { item, error: (e as Error).message, routing_ok: false, escalate_ok: false, citation_hit: null, correct: false };
+          rows[i] = { item, error: (e as Error).message, routing_ok: false, escalate_ok: false, citation_hit: null, retrieval_hit: null, correct: false };
         }
         process.stdout.write(rows[i].error ? "E" : rows[i].correct ? "." : "x");
       }
@@ -131,6 +139,7 @@ async function main() {
         escalation_reasons: r.response?.escalation_reasons,
         citations: r.response?.citations.map((c) => c.source_id),
         citation_hit: r.citation_hit,
+        retrieval_hit: r.retrieval_hit,
         correct: r.correct,
         error: r.error,
       })),
@@ -140,15 +149,19 @@ async function main() {
   );
 
   if (flag("write-readme")) {
-    if (mode !== "live") {
-      console.error("Refusing to write mock results into README. Run with --mode live.");
+    if (mode !== "live" && !flag("allow-mock")) {
+      console.error("Refusing to write mock results into README. Run with --mode live, or add --allow-mock for a labelled baseline.");
       process.exit(1);
     }
     const readme = await fs.readFile("README.md", "utf8");
     const start = "<!-- EVAL:START -->";
     const end = "<!-- EVAL:END -->";
     if (!readme.includes(start) || !readme.includes(end)) throw new Error("README is missing the EVAL markers");
-    const updated = readme.replace(new RegExp(`${start}[\\s\\S]*${end}`), `${start}\n${md}\n${end}`);
+    const banner =
+      mode === "live"
+        ? ""
+        : "> **Mock baseline, not a quality result.** Keyword classifier and template answers stand in for the models; retrieval, rules and the gate are real. The live run replaces this table once an API key is set.\n\n";
+    const updated = readme.replace(new RegExp(`${start}[\\s\\S]*${end}`), `${start}\n${banner}${md}\n${end}`);
     await fs.writeFile("README.md", updated);
     console.log("README.md updated.");
   }
@@ -175,6 +188,7 @@ export function report(rows: Row[], mode: string, file: string): string {
     `| Routing accuracy | ${pct(rows.filter((r) => r.routing_ok).length, n)} |`,
     `| Citation presence (answered with ≥1 valid citation) | ${pct(answered.filter((r) => r.response!.citations.length > 0).length, answered.length)} |`,
     `| In-scope questions given a cited answer | ${pct(inScopeCited.length, inScope.length)} |`,
+    `| Expected source retrieved (recall@k) | ${pct(withExpected.filter((r) => r.retrieval_hit).length, withExpected.length)} |`,
     `| Expected-citation hit rate | ${pct(withExpected.filter((r) => r.citation_hit).length, withExpected.length)} |`,
     `| Escalation agreement | ${pct(rows.filter((r) => r.escalate_ok).length, n)} |`,
     `| Auto-handled (answered, not escalated) | ${pct(auto.length, n)} |`,

@@ -40,4 +40,10 @@ otherwise. Do not guess from language or names.
 
 **local**: the city, district, town or village, if named. null otherwise.
 
+**search_terms**: up to six short legal terms a lawyer would use to look this
+up, in English, that the person did not use themselves. For "can I join a
+competitor after leaving" → ["restraint of trade", "non-compete"]. For "the
+builder hasn't given my flat" → ["delayed possession", "allottee", "refund
+with interest"]. Empty list if none. Never include personal details.
+
 Return only the JSON object.

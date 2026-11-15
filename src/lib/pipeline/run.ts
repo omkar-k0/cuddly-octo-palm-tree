@@ -23,7 +23,12 @@ export interface RunOptions {
 export interface RunResult {
   response: AnswerResponse;
   /** For the eval only. Never logged, never sent to the client. */
-  trace: { classification: Classification; retrieved: string[] };
+  trace: {
+    classification: Classification;
+    retrieved: string[];
+    /** Act/section/case of each retrieved passage, for retrieval-recall scoring. */
+    retrieved_refs: { act?: string; section?: string; case?: string }[];
+  };
 }
 
 export const OUT_OF_SCOPE_SUMMARY =
@@ -98,20 +103,22 @@ export async function answerQuery(rawQuery: string, opts: RunOptions = {}): Prom
   if (classification.route === OUT_OF_SCOPE) {
     return {
       response: declined(null, "out_of_scope", OUT_OF_SCOPE_SUMMARY, preReasons()),
-      trace: { classification, retrieved: [] },
+      trace: { classification, retrieved: [], retrieved_refs: [] },
     };
   }
 
   const domain = classification.route;
-  const passages = await retriever.search({ text, domain, k: gating.topK, context });
+  const searchText = [text, ...classification.search_terms].join(" ");
+  const passages = await retriever.search({ text: searchText, domain, k: gating.topK, context });
   const retrieved = passages.map((p) => p.doc.meta.id);
+  const retrieved_refs = passages.map((p) => ({ act: p.doc.meta.act, section: p.doc.meta.section, case: p.doc.meta.case }));
   const missing = missingContext(context, domain, passages);
 
   // Nothing retrieved: say so, and do not spend an answer call guessing.
   if (passages.length === 0) {
     return {
       response: declined(domain, "unverifiable", UNVERIFIABLE_SUMMARY, [...preReasons(), "low_confidence"], missing),
-      trace: { classification, retrieved },
+      trace: { classification, retrieved, retrieved_refs },
     };
   }
 
@@ -123,7 +130,7 @@ export async function answerQuery(rawQuery: string, opts: RunOptions = {}): Prom
   if (result.kind === "declined") {
     return {
       response: declined(domain, "unverifiable", UNVERIFIABLE_SUMMARY, [...preReasons(), "model_declined", "low_confidence"], missing),
-      trace: { classification, retrieved },
+      trace: { classification, retrieved, retrieved_refs },
     };
   }
 
@@ -148,6 +155,6 @@ export async function answerQuery(rawQuery: string, opts: RunOptions = {}): Prom
       follow_ups: g.follow_ups,
       missing_context: missing,
     },
-    trace: { classification, retrieved },
+    trace: { classification, retrieved, retrieved_refs },
   };
 }
