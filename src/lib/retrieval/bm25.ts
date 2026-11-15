@@ -1,0 +1,70 @@
+/** Small BM25 index. Enough for a few hundred documents per domain. */
+
+const STOPWORDS = new Set(
+  ("a an and are as at be been but by can could did do does for from had has have he her his how i if in into is it its " +
+    "me my not of on or our she so than that the their them then there they this to was we were what when where which " +
+    "who why will with would you your am after before about also any just more no only out over said some such up very " +
+    "should shall may get got want need").split(" "),
+);
+
+export function tokenize(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((t) => t.length > 1 && !STOPWORDS.has(t))
+    .map(stem);
+}
+
+/** Very light stemmer: enough to match "terminated" with "termination". */
+export function stem(t: string): string {
+  if (t.length <= 4) return t;
+  for (const suffix of ["ations", "ation", "ments", "ment", "ings", "ing", "ies", "ed", "es", "s"]) {
+    if (t.endsWith(suffix) && t.length - suffix.length >= 4) {
+      return suffix === "ies" ? t.slice(0, -3) + "y" : t.slice(0, -suffix.length);
+    }
+  }
+  return t;
+}
+
+export class BM25<T> {
+  private docs: { item: T; tf: Map<string, number>; len: number }[] = [];
+  private df = new Map<string, number>();
+  private avgLen = 0;
+
+  constructor(
+    items: T[],
+    toText: (item: T) => string,
+    private k1 = 1.4,
+    private b = 0.75,
+  ) {
+    for (const item of items) {
+      const tokens = tokenize(toText(item));
+      const tf = new Map<string, number>();
+      for (const t of tokens) tf.set(t, (tf.get(t) ?? 0) + 1);
+      for (const t of tf.keys()) this.df.set(t, (this.df.get(t) ?? 0) + 1);
+      this.docs.push({ item, tf, len: tokens.length });
+    }
+    this.avgLen = this.docs.reduce((s, d) => s + d.len, 0) / Math.max(1, this.docs.length);
+  }
+
+  search(query: string, k: number): { item: T; score: number }[] {
+    const q = [...new Set(tokenize(query))];
+    const N = this.docs.length;
+    const scored = this.docs.map((d) => {
+      let score = 0;
+      for (const term of q) {
+        const f = d.tf.get(term);
+        if (!f) continue;
+        const n = this.df.get(term) ?? 0;
+        const idf = Math.log(1 + (N - n + 0.5) / (n + 0.5));
+        score += (idf * f * (this.k1 + 1)) / (f + this.k1 * (1 - this.b + (this.b * d.len) / this.avgLen));
+      }
+      return { item: d.item, score };
+    });
+    return scored
+      .filter((s) => s.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, k);
+  }
+}

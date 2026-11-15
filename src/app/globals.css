@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+/* Design tokens. Light is the default; dark follows the OS. */
+:root {
+  --background: #f4f1ea;
+  --foreground: #15171c;
+  --card: #fbf9f5;
+  --card-foreground: #15171c;
+  --muted: #ebe6dc;
+  --muted-foreground: #5b5e66;
+  --border: #d9d2c4;
+  --primary: #15171c;
+  --primary-foreground: #f8f6f1;
+  --accent: #7a2e25;          /* oxblood */
+  --accent-foreground: #fbf6f2;
+  --accent-soft: #f1e3dd;
+  --verified: #2f5d46;
+  --warning: #8a5a12;
+  --ring: #7a2e25;
+  --band: #15171c;            /* dark editorial band */
+  --band-foreground: #ece8e1;
+  --band-muted: #9b9ea6;
+  --band-border: #2c2f36;
+  --radius: 0.375rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #111215;
+    --foreground: #ebe7e0;
+    --card: #17181c;
+    --card-foreground: #ebe7e0;
+    --muted: #1e2025;
+    --muted-foreground: #a2a5ad;
+    --border: #2d2f35;
+    --primary: #ebe7e0;
+    --primary-foreground: #111215;
+    --accent: #d98c78;
+    --accent-foreground: #1a0f0c;
+    --accent-soft: #2a1a16;
+    --verified: #7fbf9d;
+    --warning: #e0b061;
+    --ring: #d98c78;
+    --band: #0b0c0e;
+    --band-foreground: #ebe7e0;
+    --band-muted: #8d9098;
+    --band-border: #24262b;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-verified: var(--verified);
+  --color-warning: var(--warning);
+  --color-ring: var(--ring);
+  --color-band: var(--band);
+  --color-band-foreground: var(--band-foreground);
+  --color-band-muted: var(--band-muted);
+  --color-band-border: var(--band-border);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 4px);
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Newsreader Variable", ui-serif, Georgia, serif;
+}
+
+@layer base {
+  * { border-color: var(--border); }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+  }
+  ::selection { background: var(--accent); color: var(--accent-foreground); }
+  :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+}
+
+/* Restrained motion: one rise-and-fade. Off under reduced motion. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+.rise { animation: rise 0.8s cubic-bezier(0.2, 0.7, 0.1, 1) both; }
+.rise-1 { animation-delay: 0.05s; }
+.rise-2 { animation-delay: 0.15s; }
+.rise-3 { animation-delay: 0.25s; }
+.rise-4 { animation-delay: 0.4s; }
+
+/* Sections fade in as they enter the viewport, where supported. */
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: rise linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 40%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise, .reveal { animation: none !important; }
+  * { transition-duration: 0.01ms !important; }
+}
