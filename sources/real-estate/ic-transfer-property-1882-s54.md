@@ -1,0 +1,37 @@
+---
+id: ic-transfer-property-1882-s54
+type: statute
+title: "“Sale” defined"
+act: "The Transfer of Property Act, 1882"
+section: "Section 54"
+source_url: https://indiacode.gov.in/handle/123456789/535222
+verified: false
+last_checked: 2026-11-15
+keywords: ["lease","tenant","landlord","notice","sale","property"]
+jurisdiction: central
+provenance: indiacode
+act_id: AC_CEN_3_20_00042_188204_1523272233671
+scraped_at: 2026-11-15
+enforcement_note: "July 1, 1882"
+---
+"Sale" is a transfer of ownership in exchange for a price paid or promised or part-paid and part-promised.
+
+Sale how made.-- Such transfer, in the case of tangible immoveable property of the value of one hundred rupees and upwards, or in the case of a reversion or other intangible thing, can be made only by a registered instrument.
+
+In the case of tangible immoveable property of a va lue less than one hundred rupees, such transfer may be made either by a registered instrument or by delivery of the property.
+
+Delivery of tangible immoveable property takes place when the seller places the buyer, or such person as he directs, in possession of the property.
+
+Contract for sale.-- A contract for the sale of immoveable property is a contract that a sale of such property shall take place on terms settled between the parties.
+
+It does not, of itself, create any interest in or charge on such property.
+
+STATE AMENDMENT
+
+Assam.
+
+Amendment of section 54 of the Central Act 4 of 1882.--In Section 54 of the principal Act, in para 2, for the expression “by a registered instrument” the following expression shall be substituted, namely:---
+
+“by an instrument registered in the State of Assam, notwithstanding anything contained in the India Registration Act, 1908 (Act 16 of 1908) to the contrary.”
+
+[Vide Assam Act 10 of 1976, s. 2.]

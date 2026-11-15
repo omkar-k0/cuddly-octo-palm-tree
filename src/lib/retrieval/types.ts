@@ -21,9 +21,30 @@ export const sourceMetaSchema = z
     last_checked: z.coerce.string().optional(),
     keywords: z.array(z.string()).default([]),
     note: z.string().optional(),
+    /** Where the law applies. "central" applies everywhere. */
+    jurisdiction: z.enum(["central", "state", "local"]).default("central"),
+    /** State or UT name, for state and local law. */
+    state: z.string().optional(),
+    /** City, district, municipality or village, for local law. */
+    local: z.string().optional(),
+    /** The law applies to events on or after this date (YYYY-MM-DD). */
+    effective_from: z.coerce.string().optional(),
+    /** The law applies to events on or before this date (YYYY-MM-DD). */
+    effective_until: z.coerce.string().optional(),
+    /** Provenance for scraped documents. */
+    provenance: z.enum(["indiacode", "manual"]).default("manual"),
+    act_id: z.string().optional(),
+    scraped_at: z.coerce.string().optional(),
+    enforcement_note: z.string().optional(),
   })
   .refine((m) => (m.type === "judgment" ? !!m.case : !!m.act), {
     message: "statutes need `act`; judgments need `case`",
+  })
+  .refine((m) => m.jurisdiction === "central" || !!m.state, {
+    message: "state and local law need `state`",
+  })
+  .refine((m) => m.jurisdiction !== "local" || !!m.local, {
+    message: "local law needs `local`",
   });
 
 export type SourceMeta = z.infer<typeof sourceMetaSchema>;

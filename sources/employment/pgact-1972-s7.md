@@ -7,8 +7,10 @@ section: Section 7
 source_url: https://www.indiacode.nic.in/
 verified: false
 last_checked: 2026-11-15
+effective_until: 2025-11-20
+jurisdiction: central
 keywords: [gratuity, claim, application, controlling authority, delay, interest, not paid, thirty days]
-note: Seed paraphrase. Replace with official text.
+note: Hand-written paraphrase. India Code no longer hosts the text of this repealed Act; replace with the official text. Applies to events up to 20 Nov 2025.
 ---
 Status: paraphrase for testing, pending verification against the official
 text. May have been replaced by the Code on Social Security, 2020.
