@@ -3,6 +3,7 @@ import "@fontsource-variable/inter";
 import "@fontsource-variable/newsreader";
 import "@fontsource-variable/newsreader/wght-italic.css";
 import "./globals.css";
+import { DisclaimerGate } from "@/components/disclaimer-gate";
 import { QueryProvider } from "@/components/query-context";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </main>
           <SiteFooter />
+          <DisclaimerGate />
         </QueryProvider>
       </body>
     </html>

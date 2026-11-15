@@ -9,7 +9,7 @@ import { domainIds, OUT_OF_SCOPE } from "../src/config/domains";
 import { confidenceBands } from "../src/config/gating";
 import { llmMode } from "../src/lib/pipeline/llm";
 import { answerQuery } from "../src/lib/pipeline/run";
-import type { AnswerResponse, Citation } from "../src/lib/pipeline/types";
+import type { AnswerResponse } from "../src/lib/pipeline/types";
 
 const Item = z.object({
   id: z.string(),
