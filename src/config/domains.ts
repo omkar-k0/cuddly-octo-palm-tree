@@ -6,6 +6,7 @@
  *              "sources-pending" shows a label on the card and answers will
  *              mostly come back "unverifiable" until sources are added
  * - keywords:  used by the mock classifier and as hints for the live one
+ * - stateSensitive: answers often turn on state law, so we ask for the state
  */
 export const domains = [
   {
@@ -28,7 +29,8 @@ export const domains = [
     ],
     promptFile: "prompts/domains/corporate.md",
     sourcesDir: "sources/corporate",
-    status: "sources-pending",
+    stateSensitive: false,
+    status: "live",
   },
   {
     id: "employment",
@@ -52,6 +54,7 @@ export const domains = [
     ],
     promptFile: "prompts/domains/employment.md",
     sourcesDir: "sources/employment",
+    stateSensitive: false,
     status: "live",
   },
   {
@@ -74,7 +77,8 @@ export const domains = [
     ],
     promptFile: "prompts/domains/real-estate.md",
     sourcesDir: "sources/real-estate",
-    status: "sources-pending",
+    stateSensitive: true,
+    status: "live",
   },
   {
     id: "technology-ip",
@@ -96,7 +100,8 @@ export const domains = [
     ],
     promptFile: "prompts/domains/technology-ip.md",
     sourcesDir: "sources/technology-ip",
-    status: "sources-pending",
+    stateSensitive: false,
+    status: "live",
   },
 ] as const;
 

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { getDomain } from "@/config/domains";
 import { bandFor } from "@/config/gating";
 import { redactionLabels } from "@/lib/privacy/scrub";
-import type { AnswerResponse, Citation, EscalationReason } from "@/lib/pipeline/types";
+import type { AnswerResponse, Citation, EscalationReason, MissingContext } from "@/lib/pipeline/types";
 import { cn } from "@/lib/utils";
 
 const reasonText: Record<EscalationReason, string> = {
@@ -42,6 +42,18 @@ function Cited({ text, onCite }: { text: string; onCite: (n: number) => void }) 
   );
 }
 
+function citationScope(c: Citation) {
+  const where = c.jurisdiction === "central" ? null : c.local ? `${c.local}, ${c.state}` : c.state;
+  const when = c.effective_from && c.effective_until
+    ? `${c.effective_from} – ${c.effective_until}`
+    : c.effective_from
+      ? `From ${c.effective_from}`
+      : c.effective_until
+        ? `Until ${c.effective_until}`
+        : null;
+  return [where, when].filter(Boolean).join(" · ");
+}
+
 function citationHeading(c: Citation) {
   if (c.type === "judgment") return [c.case, c.court, c.year].filter(Boolean).join(", ");
   return [c.section, c.act].filter(Boolean).join(", ");
@@ -67,12 +79,25 @@ function Confidence({ value }: { value: number }) {
   );
 }
 
+function formatEventDate(d: string) {
+  const [y, m] = d.split("-");
+  if (!m) return y;
+  return new Date(Date.UTC(Number(y), Number(m) - 1, 1)).toLocaleString("en-IN", { month: "long", year: "numeric", timeZone: "UTC" });
+}
+
+const missingText: Record<MissingContext, string> = {
+  event_date: "when this happened (some laws changed on 21 November 2025)",
+  state: "which state and city this is in (state rules may apply)",
+};
+
 export function AnswerView({
   answer,
   onFollowUp,
+  onAddContext,
 }: {
   answer: AnswerResponse;
   onFollowUp: (q: string) => void;
+  onAddContext?: () => void;
 }) {
   const [active, setActive] = React.useState<number | null>(null);
   const refs = React.useRef(new Map<number, HTMLLIElement>());
@@ -123,6 +148,35 @@ export function AnswerView({
               </div>
             </div>
           </section>
+        )}
+
+        {(answer.context.event_date || answer.context.state || answer.missing_context.length > 0) && answer.status !== "out_of_scope" && (
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="font-mono uppercase tracking-[0.1em] text-muted-foreground">Law applied</span>
+            <Badge>{answer.context.event_date ? `Events in ${formatEventDate(answer.context.event_date)}` : "Date not given"}</Badge>
+            <Badge>
+              {answer.context.state
+                ? `${answer.context.state}${answer.context.local ? ` · ${answer.context.local}` : ""}`
+                : "Central law only"}
+            </Badge>
+          </div>
+        )}
+
+        {answer.missing_context.length > 0 && answer.status !== "out_of_scope" && (
+          <div className="flex flex-col gap-3 rounded-xl border border-foreground/15 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+            <p>
+              A more precise answer needs {answer.missing_context.map((m) => missingText[m]).join(", and ")}.
+            </p>
+            {onAddContext && (
+              <button
+                type="button"
+                onClick={onAddContext}
+                className="shrink-0 rounded-full border border-foreground/30 px-3 py-1 text-xs font-medium hover:border-foreground"
+              >
+                Add date &amp; place
+              </button>
+            )}
+          </div>
         )}
 
         <section aria-labelledby="summary-h">
@@ -207,6 +261,7 @@ export function AnswerView({
                       <p className="font-medium leading-snug">{citationHeading(c)}</p>
                       {c.pinpoint && <p className="text-xs text-muted-foreground">at {c.pinpoint}</p>}
                       <p className="text-muted-foreground">{c.title}</p>
+                      {citationScope(c) && <p className="font-mono text-[0.68rem] text-muted-foreground">{citationScope(c)}</p>}
                       <div className="flex flex-wrap items-center gap-2 pt-1">
                         {c.verified ? (
                           <Badge variant="verified">

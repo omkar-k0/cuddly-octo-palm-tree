@@ -28,4 +28,16 @@ Do not invent a deadline from general law.
 
 **confidence**: 0 to 1, how sure you are of `route`.
 
+**event_date**: when the main events happened (the termination, the breach,
+the notice, the purchase), as `YYYY-MM-DD`, `YYYY-MM` or `YYYY`, using only
+what the person says and today's date ("last March" → the right year and
+month). null if they do not say. This decides which law applies, because
+some laws changed on a fixed date.
+
+**state**: the Indian state or Union Territory the matter is in, by its full
+name ("Maharashtra", "Delhi"), if the person names it or a city in it. null
+otherwise. Do not guess from language or names.
+
+**local**: the city, district, town or village, if named. null otherwise.
+
 Return only the JSON object.

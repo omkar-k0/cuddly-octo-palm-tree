@@ -48,7 +48,7 @@ export class BM25<T> {
     this.avgLen = this.docs.reduce((s, d) => s + d.len, 0) / Math.max(1, this.docs.length);
   }
 
-  search(query: string, k: number): { item: T; score: number }[] {
+  search(query: string, k: number, keep: (item: T) => boolean = () => true): { item: T; score: number }[] {
     const q = [...new Set(tokenize(query))];
     const N = this.docs.length;
     const scored = this.docs.map((d) => {
@@ -63,7 +63,7 @@ export class BM25<T> {
       return { item: d.item, score };
     });
     return scored
-      .filter((s) => s.score > 0)
+      .filter((s) => s.score > 0 && keep(s.item))
       .sort((a, b) => b.score - a.score)
       .slice(0, k);
   }

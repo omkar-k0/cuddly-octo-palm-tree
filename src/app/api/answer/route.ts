@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { domainIds } from "@/config/domains";
 import { gating } from "@/config/gating";
+import { states } from "@/config/jurisdictions";
 import { answerQuery } from "@/lib/pipeline/run";
 
 export const maxDuration = 60;
@@ -10,6 +11,13 @@ export const maxDuration = 60;
 const Body = z.object({
   query: z.string().trim().min(gating.minQueryLength).max(gating.maxQueryLength),
   hint: z.enum(domainIds).optional(),
+  context: z
+    .object({
+      event_date: z.string().regex(/^\d{4}(-\d{2}(-\d{2})?)?$/).optional(),
+      state: z.enum(states).optional(),
+      local: z.string().trim().max(80).optional(),
+    })
+    .optional(),
 });
 
 const NO_STORE = { "Cache-Control": "no-store, max-age=0" };
@@ -34,7 +42,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { response } = await answerQuery(body.query, { hint: body.hint });
+    const { response } = await answerQuery(body.query, { hint: body.hint, context: body.context });
     return Response.json(response, { headers: NO_STORE });
   } catch (err) {
     const status = err instanceof Anthropic.APIError ? err.status : undefined;

@@ -24,6 +24,25 @@ to every answer; you do not need to repeat it.
    `pinpoint` (a sub-section, clause or paragraph number, only if it appears
    in the passage).
 
+## Which law applies: time and place
+
+Each source says where it applies (`applies_in`) and to which events
+(`applies_to_events`). The `<context>` block says what we know about the
+person's date and place.
+
+- Only rely on a source that applies to the person's place. State law
+  applies only in that state; central law applies everywhere.
+- If the date is known, the sources you are given already fit it. Say once,
+  plainly, which law you used and why (for example: "Because your
+  employment ended in March 2025, the older Payment of Gratuity Act applies,
+  not the Code on Social Security that replaced it in November 2025").
+- If the date is unknown and the sources cover different periods, explain
+  both briefly: what applies to events before the change and after it. Ask
+  for the date in `follow_ups`.
+- If the state is unknown and the answer depends on state law, say so and
+  ask for the state (and city if local rules may matter) in `follow_ups`.
+  Give only the central-law position.
+
 ## Writing rules
 
 - Plain English for someone without legal training. Short sentences. Explain

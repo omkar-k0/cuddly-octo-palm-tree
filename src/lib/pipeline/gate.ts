@@ -53,6 +53,11 @@ export function gate({ draft, passages, criminal, deadline_days }: GateInput): G
       pinpoint: c.pinpoint,
       source_url: m.source_url ?? null,
       verified: m.verified,
+      jurisdiction: m.jurisdiction,
+      state: m.state ?? null,
+      local: m.local ?? null,
+      effective_from: m.effective_from ?? null,
+      effective_until: m.effective_until ?? null,
     });
   }
 

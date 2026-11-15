@@ -13,8 +13,8 @@ export function HomeQuery() {
     <QueryBox
       hint={hint}
       onHintChange={setHint}
-      onSubmit={(query, h) => {
-        submit({ query, hint: h });
+      onSubmit={(query, h, context) => {
+        submit({ query, hint: h, context });
         router.push("/ask");
       }}
     />

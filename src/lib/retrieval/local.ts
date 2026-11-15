@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import matter from "gray-matter";
 import { domains, type DomainId } from "@/config/domains";
+import { applies, emptyContext } from "@/lib/pipeline/context";
 import { BM25 } from "./bm25";
 import {
   sourceMetaSchema,
@@ -25,10 +26,11 @@ export class LocalFileRetriever implements Retriever {
     private minScore = 0,
   ) {}
 
-  async search({ text, domain, k }: RetrievalQuery): Promise<Passage[]> {
+  async search({ text, domain, k, context }: RetrievalQuery): Promise<Passage[]> {
     const index = await this.index(domain);
+    const ctx = context ?? emptyContext;
     return index
-      .search(text, k)
+      .search(text, k, (d) => applies(d.meta, ctx))
       .filter((r) => r.score >= this.minScore)
       .map((r) => ({ doc: r.item, score: r.score }));
   }
