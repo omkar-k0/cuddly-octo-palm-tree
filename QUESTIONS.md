@@ -82,4 +82,4 @@
 
 ### Brand
 
-18. **Name.** "Nyaya Notes" is still a working title (`src/config/site.ts`).
+18. **Name.** Decided: "Dem Fragen" (`src/config/site.ts`).

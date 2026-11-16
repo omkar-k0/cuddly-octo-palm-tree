@@ -1,6 +1,6 @@
-/** Working title and site-wide strings. Replace freely. */
+/** Product name and site-wide strings. */
 export const site = {
-  name: "Nyaya Notes",
+  name: "Dem Fragen",
   tagline: "Legal first information for India",
   description:
     "Describe a legal problem in plain words. Get a structured, cited explanation of where you stand under Indian law, and a clear signal when to see an advocate.",

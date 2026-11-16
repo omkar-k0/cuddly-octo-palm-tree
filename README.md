@@ -1,4 +1,4 @@
-# Nyaya Notes (working title)
+# Dem Fragen
 
 Legal first information for India. A person describes a problem in plain
 language and gets a structured, cited explanation of where they stand under
