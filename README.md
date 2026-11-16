@@ -5,16 +5,36 @@ language and gets a structured, cited explanation of where they stand under
 Indian law, plus a clear signal when to see an advocate. **Legal
 information, not legal advice**, and every answer says so.
 
-V0 status: scaffold, landing page, query flow, and the **Employment** domain
-end to end. Not done: see the eval section. Plan in [PLAN.md](PLAN.md), open
+V0 status: all four domains have sources scraped from India Code; the law is
+chosen by when the events happened and where. Not done until the live eval
+runs (needs an API key) and a lawyer reviews sources, eval labels and the
+legal pages. Plan in [PLAN.md](PLAN.md), open
 questions in [QUESTIONS.md](QUESTIONS.md).
 
 ## Eval
 
 <!-- EVAL:START -->
-**Not run yet.** Waiting for the 30 labelled questions
-(`eval/questions.jsonl`) and an API key for a live run. V0 is not done
-until this table holds a live-mode result. See [eval/README.md](eval/README.md).
+> **Mock baseline, not a quality result.** Keyword classifier and template answers stand in for the models; retrieval, rules and the gate are real. The live run replaces this table once an API key is set.
+
+Run: 2026-11-15, mock mode, 30 questions (`questions.jsonl`)
+
+| Metric | Result |
+|---|---|
+| Routing accuracy | 96.7% (29/30) |
+| Citation presence (answered with ≥1 valid citation) | 100.0% (26/26) |
+| In-scope questions given a cited answer | 100.0% (26/26) |
+| Expected source retrieved (recall@k) | 90.0% (18/20) |
+| Expected-citation hit rate | 70.0% (14/20) |
+| Escalation agreement | 90.0% (27/30) |
+| Auto-handled (answered, not escalated) | 63.3% (19/30) |
+| Overall accuracy | 70.0% (21/30) |
+
+| Confidence band | Questions | Accuracy |
+|---|---|---|
+| Low (0.0–0.4) | 4 | 100.0% (4/4) |
+| Guarded (0.4–0.6) | 0 | n/a |
+| Moderate (0.6–0.8) | 5 | 20.0% (1/5) |
+| High (0.8–1.0) | 21 | 76.2% (16/21) |
 <!-- EVAL:END -->
 
 ## Run it
@@ -35,6 +55,7 @@ npm test            # unit tests (scrubber, signals, gate, retrieval, mock pipel
 npm run typecheck
 npm run lint
 npm run eval        # see eval/README.md
+NODE_USE_ENV_PROXY=1 npm run scrape   # refresh sources from India Code (proxy flag only needed behind a proxy)
 ```
 
 Deploy on Vercel: import the repo, set `ANTHROPIC_API_KEY` (server-side
@@ -44,7 +65,8 @@ API route.
 ## How an answer is made
 
 ```
-question → PII scrub → classifier (claude-haiku-5-5) → retrieve from sources/<domain>/
+question → PII scrub → classifier (claude-haiku-5-5): domain, criminal, deadline, date, place, search terms
+         → retrieve from sources/<domain>/, only law that applies to that date and place
          → answerer (claude-opus-5-5, JSON only) → confidence gate → answer
 ```
 
@@ -57,7 +79,9 @@ question → PII scrub → classifier (claude-haiku-5-5) → retrieve from sourc
 | Retrieval interface and BM25 file retriever | `src/lib/retrieval/` |
 | Classifier, answerer, gate, orchestration | `src/lib/pipeline/` |
 | Prompts (shared + one per domain) | `prompts/` |
-| Source documents (you fill these) | `sources/` — see [sources/README.md](sources/README.md) |
+| Source documents | `sources/`, see [sources/README.md](sources/README.md) |
+| Scraper (India Code) | `scripts/scrape/` (manifest of Acts and sections) |
+| Date and place logic | `src/lib/pipeline/context.ts`, `src/config/jurisdictions.ts` |
 | API | `src/app/api/answer/route.ts` |
 
 **Gate rules** (server-side, after every answer):
@@ -71,9 +95,18 @@ question → PII scrub → classifier (claude-haiku-5-5) → retrieve from sourc
   confidence below 0.6. Criminal and deadline signals come from the
   classifier **and** deterministic rules (either one triggers).
 
+**Which law applies.** Sources carry jurisdiction (central, state, local)
+and effective dates. Events before 21 Nov 2025 get the old labour Acts;
+later ones get the Labour Codes. State tenancy law (Delhi, Maharashtra so
+far) applies only in that state. If the date or state is unknown and would
+change the answer, the response says so in `missing_context` and the page
+asks for it.
+
 Answer JSON: `status, domain, summary, steps, citations[{act, section, case,
-…, verified}], confidence, escalate, escalation_reasons, follow_ups,
-redactions, disclaimer, mode`. Type in `src/lib/pipeline/types.ts`.
+jurisdiction, state, effective_from, effective_until, …, verified}],
+confidence, escalate, escalation_reasons, follow_ups, context,
+missing_context, redactions, disclaimer, mode`. Type in
+`src/lib/pipeline/types.ts`.
 
 The answer call uses server-side refusal fallback (`fallbacks: "default"`,
 beta `server-side-fallback-2026-07-01`): if a safety classifier declines, the
@@ -86,8 +119,10 @@ No accounts, no database, no stored questions, no analytics. The API route
 never logs question or answer text and sends `Cache-Control: no-store`. The
 question travels from the home page to `/ask` in memory, never in the URL.
 Names (after cues), phones, emails, Aadhaar, PAN, passport, voter ID, UPI IDs
-and long account numbers are removed before any model call. Draft privacy
-notice at `/privacy` and disclaimer at `/disclaimer` (both need lawyer review).
+and long account numbers are removed before any model call. A first-visit
+acknowledgement (the pattern Indian law-firm sites use under BCI rules) is
+remembered in localStorage only. Drafts of `/privacy` (DPDP Act),
+`/disclaimer` and `/terms` need a lawyer's review.
 
 ## Not in V0
 

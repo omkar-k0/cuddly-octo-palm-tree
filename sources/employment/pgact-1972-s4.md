@@ -7,8 +7,10 @@ section: Section 4
 source_url: https://www.indiacode.nic.in/
 verified: false
 last_checked: 2026-11-15
+effective_until: 2025-11-20
+jurisdiction: central
 keywords: [gratuity, resignation, retirement, five years, continuous service, termination, misconduct, forfeiture]
-note: Seed paraphrase. Replace with official text. May be superseded by the Code on Social Security, 2020.
+note: Hand-written paraphrase. India Code no longer hosts the text of this repealed Act; replace with the official text. Applies to events up to 20 Nov 2025.
 ---
 Status: paraphrase for testing, pending verification against the official
 text. This Act may have been replaced by the Code on Social Security, 2020

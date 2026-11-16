@@ -9,7 +9,7 @@ const passage = (id: string, verified = false): Passage => ({
     domain: "employment",
     path: `sources/employment/${id}.md`,
     body: "text",
-    meta: { id, type: "statute", title: id, act: "Some Act, 1972", section: "Section 4", verified, keywords: [] },
+    meta: { id, type: "statute", title: id, act: "Some Act, 1972", section: "Section 4", verified, keywords: [], jurisdiction: "central", provenance: "manual" },
   },
 });
 

@@ -46,8 +46,13 @@ describe("answerQuery (mock mode)", () => {
     expect(response.citations).toEqual([]);
   });
 
-  it("returns unverifiable for a domain with no sources", async () => {
-    const { response } = await run("My landlord will not return my security deposit after I moved out of the flat.");
+  it("returns unverifiable when nothing is retrieved", async () => {
+    const empty = { search: async () => [] };
+    const { response } = await answerQuery("My landlord will not return my security deposit after I moved out of the flat.", {
+      mode: "mock",
+      today: "2026-11-15",
+      retriever: empty,
+    });
     expect(response.domain).toBe("real-estate");
     expect(response.status).toBe("unverifiable");
     expect(response.summary).toMatch(/^Unverifiable/);

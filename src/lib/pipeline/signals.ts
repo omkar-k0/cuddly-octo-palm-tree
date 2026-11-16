@@ -24,7 +24,13 @@ const CRIMINAL = [
   /\bthreaten(ed|ing)?\b.*\b(kill|harm|attack)\b/i,
   /\bstalk(ing|ed)?\b/i,
   /\bextort(ion|ed)?\b/i,
-  /\bfraud\b.*\bcomplaint\b|\bcyber\s?crime\b/i,
+  /\bfraud\b|\bscam(med)?\b|\bcyber\s?crime\b/i,
+  /\bhack(ed|er|ing)\b/i,
+  /\b(touched|touching|groped|groping) (me|her|my)\b|\bmolest(ed|ation|ing)?\b/i,
+  /\brape|sexual assault|outrag(e|ing) (her|my) modesty\b/i,
+  // Self-help eviction and forcible dispossession: the police may be involved.
+  /\b(changed|broke) the locks?\b|\blocked (me|us) out\b|\bput (my|our) (things|belongings|stuff|luggage) outside\b|\bthrew (my|our) (things|belongings|stuff)\b/i,
+  /\b(cut|cutting) off (the |my |our )?(water|electricity|power)\b/i,
 ];
 
 export function looksCriminal(text: string): boolean {

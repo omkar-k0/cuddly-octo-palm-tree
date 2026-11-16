@@ -7,9 +7,16 @@ import type { DomainId } from "@/config/domains";
  * Hands a question from the home page to /ask in memory only. The question
  * never goes into the URL, browser storage or history; a refresh drops it.
  */
+export interface FormContext {
+  event_date?: string;
+  state?: string;
+  local?: string;
+}
+
 export interface Pending {
   query: string;
   hint?: DomainId;
+  context?: FormContext;
 }
 
 interface QueryState {

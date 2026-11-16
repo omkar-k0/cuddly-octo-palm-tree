@@ -1,4 +1,5 @@
 /** Small BM25 index. Enough for a few hundred documents per domain. */
+import { stemmer as porter } from "stemmer";
 
 const STOPWORDS = new Set(
   ("a an and are as at be been but by can could did do does for from had has have he her his how i if in into is it its " +
@@ -16,15 +17,9 @@ export function tokenize(text: string): string[] {
     .map(stem);
 }
 
-/** Very light stemmer: enough to match "terminated" with "termination". */
+/** Porter stemmer: "terminated" and "termination" both become "termin". */
 export function stem(t: string): string {
-  if (t.length <= 4) return t;
-  for (const suffix of ["ations", "ation", "ments", "ment", "ings", "ing", "ies", "ed", "es", "s"]) {
-    if (t.endsWith(suffix) && t.length - suffix.length >= 4) {
-      return suffix === "ies" ? t.slice(0, -3) + "y" : t.slice(0, -suffix.length);
-    }
-  }
-  return t;
+  return /^\d/.test(t) ? t : porter(t);
 }
 
 export class BM25<T> {
@@ -48,7 +43,7 @@ export class BM25<T> {
     this.avgLen = this.docs.reduce((s, d) => s + d.len, 0) / Math.max(1, this.docs.length);
   }
 
-  search(query: string, k: number): { item: T; score: number }[] {
+  search(query: string, k: number, keep: (item: T) => boolean = () => true): { item: T; score: number }[] {
     const q = [...new Set(tokenize(query))];
     const N = this.docs.length;
     const scored = this.docs.map((d) => {
@@ -63,7 +58,7 @@ export class BM25<T> {
       return { item: d.item, score };
     });
     return scored
-      .filter((s) => s.score > 0)
+      .filter((s) => s.score > 0 && keep(s.item))
       .sort((a, b) => b.score - a.score)
       .slice(0, k);
   }

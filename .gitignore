@@ -45,3 +45,6 @@ next-env.d.ts
 
 # eval outputs
 /eval/results/
+
+# scraper cache
+/.cache/

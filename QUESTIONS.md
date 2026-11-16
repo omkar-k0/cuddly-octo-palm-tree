@@ -1,83 +1,83 @@
 # Open questions
 
-Things I did not guess. Each one has the default I used so the build could
-move; change any of them.
+## Decided (15–16 Nov 2026)
 
-## Blocking "done"
+| # | Question | Decision | Where |
+|---|---|---|---|
+| 1 | Eval questions | Claude writes them | `eval/questions.jsonl` (30) |
+| 2 | API key | Later; code around it | Mock mode until set |
+| 4 | Old Acts vs Labour Codes | Both, chosen by when the dispute arose | `effective_from/until` on sources; `src/lib/pipeline/context.ts` |
+| 5 | Unverified sources | Shown; a lawyer verifies later from an admin dashboard | `verified` flag, "Pending verification" label |
+| 6 | State law | Ask state, and city where local rules apply | "When & where" fields; `jurisdiction/state/local` on sources |
+| — | Scraping | Allowed | `npm run scrape` (India Code) |
+| 18 | Legal pages | Draft from Indian law-firm patterns; lawyer reviews later | `/disclaimer`, `/privacy`, `/terms`, first-visit gate |
+| 19 | Design reference | Saved Prime Security page provided | `design/references.md` |
 
-1. **The 30 eval questions.** `eval/questions.jsonl` does not exist yet. The
-   format is in `eval/README.md` and `eval/questions.example.jsonl`. Can you
-   label each with domain, expected escalate, and expected citations (act +
-   section, or case)?
-2. **API key for live runs.** No `ANTHROPIC_API_KEY` was available in this
-   session, so everything here ran in mock mode. The live path type-checks and
-   follows the SDK docs, but it has not made a real call yet.
-3. **How should "accuracy" be graded?** Default: an item is correct when the
-   domain matches, the escalate flag matches, and (if you listed expected
-   citations) at least one of them is cited. Do you want a lawyer-graded or
-   LLM-judged correctness score on the summary text too?
+## Still open
 
-## Legal content
+### Before "done"
 
-4. **Labour Codes.** My understanding is that the four Labour Codes (Wages,
-   Industrial Relations, Social Security, OSH) were brought into force on
-   21 November 2025 and replace the Payment of Gratuity Act 1972, the
-   Industrial Disputes Act 1947 and others. The Employment seed documents in
-   `sources/employment/` are short paraphrases of older Acts plus the Codes,
-   all marked `verified: false`. Please confirm which instruments to cite, and
-   replace the seeds with official text (India Code) before any public use.
-5. **Who verifies sources?** Each source file has `verified: true|false`; the
-   UI shows unverified citations with a "pending verification" label. Who
-   flips the flag, and should unverified sources be excluded in production?
-6. **State law.** Tenancy, shops and establishments, and stamp duty vary by
-   state. Should V0 ask the user's state, or answer central law only and say so?
-7. **Judgments.** Do you want case law in V0 sources, or statutes only to
-   start? The schema supports both.
-8. **Criminal matters.** Default: anything criminal is escalated and still gets
-   a short general answer if it falls inside a domain (e.g. workplace
-   harassment that is also an offence). Should criminal queries instead get no
-   answer at all, only the escalation?
+1. **Live eval run.** Needs `ANTHROPIC_API_KEY`. The README shows a mock
+   baseline, clearly labelled, until then.
+2. **Eval labels need a lawyer's review.** A model wrote both the system and
+   its test questions, which flatters the scores. Can the reviewing lawyer
+   check `expected_escalate` and `expected_citations`?
+3. **Grading.** An item counts as correct when domain, escalation and (if
+   given) an expected citation all match. Do you also want the explanation
+   text graded (by a lawyer or an LLM judge)?
 
-## Product and thresholds
+### Legal content
 
-9. **Low-confidence threshold.** Default 0.6, in `src/config/gating.ts`.
-10. **"Deadlines under 7 days".** Default: escalate when a deadline is fewer
-    than 7 days away (`< 7`). Exactly 7 days does not escalate. Also: an
-    unknown or past deadline does not escalate on its own. OK?
-11. **No citation → answer text.** Default: status `unverifiable`, the summary
-    says so plainly, no steps are given except "speak to an advocate", and
-    confidence is capped at 0.3 (which also sets escalate). OK?
-12. **Languages.** English only in V0? Hindi and regional languages change
-    the classifier, the PII scrubber and the eval.
-13. **Abuse and cost limits.** No accounts means anyone can call the API.
-    Default: input capped at 2,000 characters, no rate limit. Do you want
-    Vercel's firewall rate limiting, or a per-IP limit in middleware (that
-    means processing IPs, which the privacy notice must then mention)?
-14. **Insights cards.** The home page has four insights cards with original
-    short titles, marked "Coming soon". Who writes the articles?
+4. **Official text of the repealed labour Acts.** India Code no longer hosts
+   the Payment of Gratuity Act, Industrial Disputes Act, Payment of Wages Act
+   or Maternity Benefit Act. Our files for them are paraphrases. Where should
+   the official text come from (Legislative Department PDFs, a law reporter)?
+5. **Commencement details to confirm.** India Code says the Code on Social
+   Security and the Industrial Relations Code came into force on 21 Nov
+   2025. For the Code on Wages it records only "phased commencement from
+   18 Dec 2020", so I assumed 21 Nov 2025 for sections 17, 18 and 45. For
+   the DPDP Act, India Code gives only the assent date; obligations commence
+   in phases, so each DPDP source carries a "check commencement" note.
+   Please confirm both.
+6. **Savings and transition.** For disputes that straddle 21 Nov 2025 (e.g.
+   service that began before and ended after), the repeal-and-savings
+   provisions decide which law applies. V0 shows both regimes when the date
+   falls in November 2025 or is unknown. Is that the right behaviour?
+7. **State coverage.** State tenancy law is in for Maharashtra and Delhi.
+   Karnataka's Rent Act is on India Code only as a PDF. Which states next?
+   No city or village-level instruments are in the library yet, although the
+   system supports them.
+8. **Case law.** Still statutes only. Which judgments should go in first?
+   (Indian Kanoon's terms restrict scraping; Supreme Court and High Court
+   sites are options.)
+9. **Admin dashboard for verification.** Out of scope for this session. The
+   `verified` flag lives in each source file today; a dashboard would need
+   somewhere to store verifications (and a login). OK to design that next?
 
-## Privacy (DPDP)
+### Product and thresholds
 
-15. **Name redaction is heuristic.** Phones, emails, Aadhaar, PAN, passport,
-    voter ID, UPI and bank-account-like numbers are caught by pattern. Names
-    are caught only after cues ("my name is", "Mr", "Smt", "Shri" …). A bare
-    name ("Ramesh didn't pay me") will get through. Is that acceptable for V0,
-    or do you want a stricter (and more over-redacting) approach?
-16. **Data fiduciary details.** The privacy notice has placeholders for the
-    legal entity name, address and grievance officer contact. Please supply.
-17. **Anthropic as processor.** The notice says scrubbed text is sent to
-    Anthropic for processing and is not stored by us. Please confirm your
-    Anthropic data-retention settings (e.g. zero data retention) so the notice
-    states it accurately, and whether cross-border transfer needs any extra
-    wording.
-18. **Lawyer review.** The privacy and disclaimer pages are drafts by an
-    engineer, not by an advocate. They need review before launch.
+10. **Thresholds** (unchanged): escalate below 0.6 confidence; escalate when a
+    deadline is fewer than 7 days away (exactly 7 does not escalate).
+11. **Languages.** One eval question is in Hinglish. Full Hindi support needs
+    a decision.
+12. **Rate limiting.** Still none. Vercel firewall rules, or per-IP limits
+    (which the privacy notice would then need to mention)?
+13. **Insights articles.** Cards are still "Coming soon". Who writes them?
 
-## Design
+### Privacy (DPDP)
 
-19. **primesec.ai was not reachable** from this sandbox (proxy blocked it), and
-    neither were the other reference sites. The home page follows your written
-    notes (split-line serif hero, 01–04 cards, insights, restrained motion).
-    Can you share screenshots, or the parts of primesec.ai you want echoed?
-20. **Name and brand.** The app is called "Nyaya Notes" as a working title.
-    Replace in `src/config/site.ts`.
+14. **Placeholders.** Legal entity, address, Grievance Officer, hosting
+    provider, log retention period and governing-law city are bracketed in
+    `/privacy` and `/terms`.
+15. **Anthropic data terms.** The privacy notice needs your account's
+    retention and training terms (for example zero data retention) and
+    processing locations.
+16. **Name redaction is heuristic.** Bare names without a cue still get
+    through. Acceptable for V0?
+17. **City field.** Users may now enter a city or village. That is low-risk
+    but is personal data in combination with a question; the notice covers
+    it. OK?
+
+### Brand
+
+18. **Name.** "Nyaya Notes" is still a working title (`src/config/site.ts`).

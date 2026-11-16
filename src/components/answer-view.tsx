@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { getDomain } from "@/config/domains";
 import { bandFor } from "@/config/gating";
 import { redactionLabels } from "@/lib/privacy/scrub";
-import type { AnswerResponse, Citation, EscalationReason } from "@/lib/pipeline/types";
+import type { AnswerResponse, Citation, EscalationReason, MissingContext } from "@/lib/pipeline/types";
 import { cn } from "@/lib/utils";
 
 const reasonText: Record<EscalationReason, string> = {
@@ -31,7 +31,7 @@ function Cited({ text, onCite }: { text: string; onCite: (n: number) => void }) 
             key={i}
             type="button"
             onClick={() => onCite(n)}
-            className="mx-0.5 inline-flex h-[1.15rem] min-w-[1.15rem] -translate-y-[0.35em] items-center justify-center rounded-full border border-accent/40 bg-accent-soft px-1 align-baseline text-[0.62rem] font-semibold text-accent transition-colors hover:bg-accent hover:text-accent-foreground"
+            className="mx-0.5 inline-flex h-[1.15rem] min-w-[1.15rem] -translate-y-[0.35em] items-center justify-center rounded-full border border-accent/40 bg-accent-soft px-1 align-baseline font-mono text-[0.62rem] font-semibold text-accent transition-colors hover:bg-accent hover:text-accent-foreground"
             aria-label={`Source ${n}`}
           >
             {n}
@@ -40,6 +40,18 @@ function Cited({ text, onCite }: { text: string; onCite: (n: number) => void }) 
       })}
     </>
   );
+}
+
+function citationScope(c: Citation) {
+  const where = c.jurisdiction === "central" ? null : c.local ? `${c.local}, ${c.state}` : c.state;
+  const when = c.effective_from && c.effective_until
+    ? `${c.effective_from} – ${c.effective_until}`
+    : c.effective_from
+      ? `From ${c.effective_from}`
+      : c.effective_until
+        ? `Until ${c.effective_until}`
+        : null;
+  return [where, when].filter(Boolean).join(" · ");
 }
 
 function citationHeading(c: Citation) {
@@ -52,14 +64,14 @@ function Confidence({ value }: { value: number }) {
   return (
     <div>
       <div className="flex items-baseline justify-between text-xs">
-        <span className="uppercase tracking-[0.12em] text-muted-foreground">Confidence</span>
+        <span className="font-mono uppercase tracking-[0.12em] text-muted-foreground">Confidence</span>
         <span className="tabular-nums">
           {band.label} · {value.toFixed(2)}
         </span>
       </div>
       <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted" role="meter" aria-valuemin={0} aria-valuemax={1} aria-valuenow={value} aria-label="Confidence">
         <div
-          className={cn("h-full rounded-full", value >= 0.6 ? "bg-foreground" : "bg-accent")}
+          className={cn("h-full rounded-full", value >= 0.6 ? "bg-accent" : "bg-danger")}
           style={{ width: `${Math.max(3, value * 100)}%` }}
         />
       </div>
@@ -67,12 +79,25 @@ function Confidence({ value }: { value: number }) {
   );
 }
 
+function formatEventDate(d: string) {
+  const [y, m] = d.split("-");
+  if (!m) return y;
+  return new Date(Date.UTC(Number(y), Number(m) - 1, 1)).toLocaleString("en-IN", { month: "long", year: "numeric", timeZone: "UTC" });
+}
+
+const missingText: Record<MissingContext, string> = {
+  event_date: "when this happened (some laws changed on 21 November 2025)",
+  state: "which state and city this is in (state rules may apply)",
+};
+
 export function AnswerView({
   answer,
   onFollowUp,
+  onAddContext,
 }: {
   answer: AnswerResponse;
   onFollowUp: (q: string) => void;
+  onAddContext?: () => void;
 }) {
   const [active, setActive] = React.useState<number | null>(null);
   const refs = React.useRef(new Map<number, HTMLLIElement>());
@@ -105,11 +130,11 @@ export function AnswerView({
         </header>
 
         {answer.escalate && (
-          <section className="rounded-lg border border-accent/40 bg-accent-soft p-5" aria-labelledby="escalate-h">
+          <section className="rounded-xl border border-danger/40 bg-danger-soft p-5" aria-labelledby="escalate-h">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
+              <AlertTriangle className="mt-0.5 size-5 shrink-0 text-danger" aria-hidden />
               <div className="space-y-2">
-                <h2 id="escalate-h" className="font-serif text-xl text-accent">
+                <h2 id="escalate-h" className="font-serif text-xl text-danger">
                   Speak to an advocate
                 </h2>
                 <ul className="space-y-1 text-sm">
@@ -125,6 +150,35 @@ export function AnswerView({
           </section>
         )}
 
+        {(answer.context.event_date || answer.context.state || answer.missing_context.length > 0) && answer.status !== "out_of_scope" && (
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="font-mono uppercase tracking-[0.1em] text-muted-foreground">Law applied</span>
+            <Badge>{answer.context.event_date ? `Events in ${formatEventDate(answer.context.event_date)}` : "Date not given"}</Badge>
+            <Badge>
+              {answer.context.state
+                ? `${answer.context.state}${answer.context.local ? ` · ${answer.context.local}` : ""}`
+                : "Central law only"}
+            </Badge>
+          </div>
+        )}
+
+        {answer.missing_context.length > 0 && answer.status !== "out_of_scope" && (
+          <div className="flex flex-col gap-3 rounded-xl border border-foreground/15 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
+            <p>
+              A more precise answer needs {answer.missing_context.map((m) => missingText[m]).join(", and ")}.
+            </p>
+            {onAddContext && (
+              <button
+                type="button"
+                onClick={onAddContext}
+                className="shrink-0 rounded-full border border-foreground/30 px-3 py-1 text-xs font-medium hover:border-foreground"
+              >
+                Add date &amp; place
+              </button>
+            )}
+          </div>
+        )}
+
         <section aria-labelledby="summary-h">
           <h2 id="summary-h" className="sr-only">Summary</h2>
           <p className="font-serif text-[1.35rem] leading-relaxed sm:text-[1.5rem]">
@@ -134,7 +188,7 @@ export function AnswerView({
 
         {answer.steps.length > 0 && (
           <section aria-labelledby="steps-h">
-            <h2 id="steps-h" className="mb-4 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+            <h2 id="steps-h" className="mb-4 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
               What you can do
             </h2>
             <ol className="space-y-3">
@@ -152,7 +206,7 @@ export function AnswerView({
 
         {answer.follow_ups.length > 0 && (
           <section aria-labelledby="follow-h">
-            <h2 id="follow-h" className="mb-3 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+            <h2 id="follow-h" className="mb-3 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
               Questions that would change the answer
             </h2>
             <div className="flex flex-col gap-2">
@@ -179,7 +233,7 @@ export function AnswerView({
         <Confidence value={answer.confidence} />
 
         <section aria-labelledby="sources-h">
-          <h2 id="sources-h" className="mb-3 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+          <h2 id="sources-h" className="mb-3 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
             Sources {answer.citations.length > 0 && `(${answer.citations.length})`}
           </h2>
           {answer.citations.length === 0 ? (
@@ -195,7 +249,7 @@ export function AnswerView({
                     if (el) refs.current.set(c.n, el);
                   }}
                   className={cn(
-                    "rounded-md border p-4 text-sm transition-colors",
+                    "rounded-xl border p-4 text-sm transition-colors",
                     active === c.n ? "border-accent bg-accent-soft" : "border-foreground/10 bg-card",
                   )}
                 >
@@ -207,6 +261,7 @@ export function AnswerView({
                       <p className="font-medium leading-snug">{citationHeading(c)}</p>
                       {c.pinpoint && <p className="text-xs text-muted-foreground">at {c.pinpoint}</p>}
                       <p className="text-muted-foreground">{c.title}</p>
+                      {citationScope(c) && <p className="font-mono text-[0.68rem] text-muted-foreground">{citationScope(c)}</p>}
                       <div className="flex flex-wrap items-center gap-2 pt-1">
                         {c.verified ? (
                           <Badge variant="verified">

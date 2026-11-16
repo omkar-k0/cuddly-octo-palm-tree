@@ -6,6 +6,7 @@
  *              "sources-pending" shows a label on the card and answers will
  *              mostly come back "unverifiable" until sources are added
  * - keywords:  used by the mock classifier and as hints for the live one
+ * - stateSensitive: answers often turn on state law, so we ask for the state
  */
 export const domains = [
   {
@@ -22,13 +23,15 @@ export const domains = [
       "Insolvency and recovery (IBC)",
     ],
     keywords: [
-      "company", "director", "shareholder", "share", "llp", "partnership", "partner",
+      "private company", "director", "shareholder", "shareholders", "llp", "partnership", "partner",
       "board", "incorporation", "startup", "contract", "breach", "vendor", "invoice",
       "insolvency", "ibc", "nclt", "winding", "roc", "mca", "agm", "esop", "founder",
+      "cheque", "bounced", "client", "supplier", "penalty", "invoices", "majority",
     ],
     promptFile: "prompts/domains/corporate.md",
     sourcesDir: "sources/corporate",
-    status: "sources-pending",
+    stateSensitive: false,
+    status: "live",
   },
   {
     id: "employment",
@@ -48,10 +51,12 @@ export const domains = [
       "termination", "dismissed", "resign", "resignation", "notice", "gratuity", "pf",
       "provident", "epf", "bonus", "retrenchment", "layoff", "laid", "hr", "manager",
       "posh", "harassment", "workplace", "appraisal", "relieving", "settlement", "office",
-      "company", "bond", "probation", "overtime", "maternity",
+      "bond", "probation", "overtime", "maternity", "competitor", "offer letter",
+      "non-compete", "deducted", "f&f", "laid off", "pregnancy", "contract ended",
     ],
     promptFile: "prompts/domains/employment.md",
     sourcesDir: "sources/employment",
+    stateSensitive: false,
     status: "live",
   },
   {
@@ -70,11 +75,13 @@ export const domains = [
     keywords: [
       "landlord", "tenant", "rent", "lease", "deposit", "evict", "eviction", "flat",
       "apartment", "builder", "rera", "possession", "property", "plot", "land", "title",
-      "registration", "stamp", "sale", "deed", "society", "house", "home", "mutation",
+      "registration", "stamp", "sale", "deed", "society", "mutation", "shop", "vacate",
+      "locks", "rented",
     ],
     promptFile: "prompts/domains/real-estate.md",
     sourcesDir: "sources/real-estate",
-    status: "sources-pending",
+    stateSensitive: true,
+    status: "live",
   },
   {
     id: "technology-ip",
@@ -93,10 +100,12 @@ export const domains = [
       "trademark", "brand", "logo", "copyright", "patent", "design", "ip", "software",
       "app", "website", "online", "data", "privacy", "dpdp", "it act", "intermediary",
       "content", "infringement", "license", "licence", "saas", "domain", "code", "hacked",
+      "instagram", "account", "freelance", "registered trademark", "products",
     ],
     promptFile: "prompts/domains/technology-ip.md",
     sourcesDir: "sources/technology-ip",
-    status: "sources-pending",
+    stateSensitive: false,
+    status: "live",
   },
 ] as const;
 
