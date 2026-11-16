@@ -1,5 +1,7 @@
 # PLAN — V0, legal first-information for India
 
+> Next versions (V1 India, V3 Germany): see [ROADMAP.md](ROADMAP.md).
+
 A person describes a problem in plain language and gets a structured, cited
 explanation of where they stand, plus a clear signal when to see an advocate.
 Legal information, not legal advice; every answer says so.
