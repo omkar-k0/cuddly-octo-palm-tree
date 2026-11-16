@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   // API route's serverless bundle on Vercel must include them.
   outputFileTracingIncludes: {
     "/api/answer": ["./prompts/**/*", "./sources/**/*"],
+    "/admin": ["./sources/**/*"],
+    "/admin/sources/[id]": ["./sources/**/*"],
+    "/api/admin/verify": ["./sources/**/*"],
   },
   turbopack: {
     rules: {

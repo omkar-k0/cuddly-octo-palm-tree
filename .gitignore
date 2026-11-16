@@ -48,3 +48,6 @@ next-env.d.ts
 
 # scraper cache
 /.cache/
+
+# local verification store (dev)
+/.data/
