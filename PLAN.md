@@ -164,7 +164,8 @@ real questions.**
 - [x] Mock eval baseline in README (labelled)
 - [ ] Live eval run: blocked on an API key
 - [ ] Lawyer review of sources, eval labels and legal pages
-- [ ] Admin dashboard for verification (next)
+- [x] Admin dashboard for verification (third session): `/admin`, Postgres log, sign-in
+- [ ] Production deploy: owner imports the repo in Vercel (DEPLOY.md)
 
 ## 9. Not in V0
 

@@ -37,6 +37,24 @@ Run: 2026-11-15, mock mode, 30 questions (`questions.jsonl`)
 | High (0.8–1.0) | 21 | 76.2% (16/21) |
 <!-- EVAL:END -->
 
+## Lawyer verification dashboard
+
+`/admin` (sign-in required) lists every source with per-area progress.
+A lawyer opens a source, checks it against the official link, and marks it
+**Verified**, **Needs changes** or **Rejected** (a note is required for the
+last two). Effects on answers, within a minute:
+
+- Verified sources show "Verified" in citations.
+- Rejected sources are never retrieved.
+- Each decision records the reviewer, time and a fingerprint of the exact
+  text reviewed. If the text later changes (e.g. after a re-scrape), the
+  source shows "Text changed" and counts as unverified until reviewed again.
+
+Decisions are an append-only log in Postgres (`DATABASE_URL`), or
+`.data/verifications.json` locally. Accounts come from `ADMIN_USERS`
+(email plus scrypt hash, `npm run -s admin:hash`) and sessions are signed
+with `ADMIN_SESSION_SECRET`. See [DEPLOY.md](DEPLOY.md).
+
 ## Run it
 
 ```bash
@@ -58,9 +76,9 @@ npm run eval        # see eval/README.md
 NODE_USE_ENV_PROXY=1 npm run scrape   # refresh sources from India Code (proxy flag only needed behind a proxy)
 ```
 
-Deploy on Vercel: import the repo, set `ANTHROPIC_API_KEY` (server-side
-only), deploy. `next.config.ts` bundles `prompts/` and `sources/` with the
-API route.
+Deploy on Vercel: follow [DEPLOY.md](DEPLOY.md) (import the repo, add Neon
+Postgres, set the admin variables). `next.config.ts` bundles `prompts/` and
+`sources/` with the routes that read them.
 
 ## How an answer is made
 

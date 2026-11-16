@@ -12,6 +12,8 @@
 | — | Scraping | Allowed | `npm run scrape` (India Code) |
 | 18 | Legal pages | Draft from Indian law-firm patterns; lawyer reviews later | `/disclaimer`, `/privacy`, `/terms`, first-visit gate |
 | 19 | Design reference | Saved Prime Security page provided | `design/references.md` |
+| 9 | Admin dashboard | Build it | `/admin`, see README |
+| — | Going live | User connects the repo to Vercel; site public now | `DEPLOY.md` |
 
 ## Still open
 
@@ -50,9 +52,9 @@
 8. **Case law.** Still statutes only. Which judgments should go in first?
    (Indian Kanoon's terms restrict scraping; Supreme Court and High Court
    sites are options.)
-9. **Admin dashboard for verification.** Out of scope for this session. The
-   `verified` flag lives in each source file today; a dashboard would need
-   somewhere to store verifications (and a login). OK to design that next?
+9. **Dashboard follow-ups.** Do you want lawyers to edit source text in the
+   dashboard (today they flag "needs changes" and a developer edits the file),
+   per-lawyer audit export, or two-person sign-off before "Verified"?
 
 ### Product and thresholds
 
