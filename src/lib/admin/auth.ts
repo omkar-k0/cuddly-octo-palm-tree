@@ -122,10 +122,19 @@ export function sessionCookieOptions() {
   };
 }
 
-/** Same-origin check for state-changing admin requests. */
+/**
+ * Same-origin check for state-changing admin requests.
+ *
+ * Browsers send Sec-Fetch-Site, which page scripts cannot set; it is the
+ * primary signal. Without it, fall back to the Origin header. (Our
+ * Referrer-Policy: no-referrer makes browsers send "Origin: null" on
+ * same-origin POSTs, so Origin alone would reject real users.)
+ */
 export function sameOrigin(request: Request): boolean {
+  const site = request.headers.get("sec-fetch-site");
+  if (site) return site === "same-origin";
   const origin = request.headers.get("origin");
-  if (!origin) return false;
+  if (!origin || origin === "null") return false;
   try {
     return new URL(origin).host === new URL(request.url).host;
   } catch {

@@ -72,6 +72,9 @@ describe("request guards", () => {
     const bad = new Request("https://site.test/api/admin/verify", { method: "POST", headers: { origin: "https://evil.test" } });
     const none = new Request("https://site.test/api/admin/verify", { method: "POST" });
     expect([sameOrigin(ok), sameOrigin(bad), sameOrigin(none)]).toEqual([true, false, false]);
+    const browserSame = new Request("https://site.test/x", { method: "POST", headers: { origin: "null", "sec-fetch-site": "same-origin" } });
+    const browserCross = new Request("https://site.test/x", { method: "POST", headers: { origin: "https://site.test", "sec-fetch-site": "cross-site" } });
+    expect([sameOrigin(browserSame), sameOrigin(browserCross)]).toEqual([true, false]);
   });
   it("throttles after five failures", () => {
     for (let i = 0; i < 5; i++) noteFailure("1.2.3.4");
