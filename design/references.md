@@ -1,24 +1,34 @@
 # Design references
 
-Patterns to borrow, never assets. We take layout and interaction *ideas* from
-these sites. We do not copy their code, text, images, logos, icons or fonts.
+Patterns to borrow, never assets. We take layout and interaction *ideas*.
+We do not copy code, text, images, logos, icons or fonts from any site.
 
 | Site | What we take | What we do not take |
 |---|---|---|
-| https://www.primesec.ai/ | Core reference for the home page: overall pacing, dark/light rhythm, section structure | Copy, branding, illustrations, fonts |
+| primesec.ai (core reference) | See below | Copy, brand, logo, illustrations, fonts (TT Interphases), code, colours as such |
 | leome-and-partners.com | Split-line serif hero, numbered 01–04 service cards, insights cards | Copy, photography, logo |
-| harvey.ai, legora.com | How legal AI presents trust: sources first, plain statements of limits | Product UI, marketing text |
-| perplexity.ai | Answer layout: summary up top, numbered inline source markers, source list, follow-up questions | UI code, iconography |
-| doctolib.de | Search → filter → booking flow. **Later only**, if the referral model is cleared | Everything, for now |
-| linear.app | Landing page pacing, restrained motion (short fades, small translate, no parallax) | Gradients, code, copy |
+| Indian law firms (Cyril Amarchand Mangaldas, AZB, Khaitan, Trilegal, Shardul Amarchand Mangaldas) | First-visit "I agree" disclaimer (BCI solicitation rules); separate Disclaimer, Privacy, Terms pages; privacy-policy section order | Their text |
+| harvey.ai, legora.com | Trust presentation: sources first, plain limits | Product UI, marketing text |
+| perplexity.ai | Answer layout: summary, numbered inline sources, source list, follow-ups | UI code, icons |
+| doctolib.de | Search → filter → booking. **Later only**, if referrals are cleared | Everything, for now |
+| linear.app | Pacing, restrained motion | Gradients, code, copy |
 
-## Notes from the first session
+## Patterns taken from the Prime Security page
 
-- The sandbox could not reach primesec.ai (blocked by the network proxy), so
-  the home page follows the written descriptions above, not a live look at the
-  site. See QUESTIONS.md.
-- Fonts are OFL-licensed and self-hosted from npm (`@fontsource-variable/*`):
-  Newsreader (serif, display) and Inter (sans, UI). No font files from any
-  reference site.
-- Motion: one fade-and-rise on scroll (CSS only), disabled under
-  `prefers-reduced-motion`.
+From the saved page you provided (rendered offline in a sandbox to study
+structure; nothing from it is in the repo):
+
+| Pattern on the reference | Our version |
+|---|---|
+| Near-black base, one bright accent used sparingly | `#111` base, marigold `#f2b53a` accent (warm, Indian; not their lemon yellow), coral for warnings |
+| Thin accent announcement bar | "V0 preview" bar, dismissible |
+| Floating rounded pill navigation with accent CTA pill | `SiteHeader`, plus a mobile menu |
+| Huge left-aligned headline, statement paragraph | Split-line serif hero (from the brief) and an "Our standard" statement with bright/muted contrast |
+| Tabbed use-case section with progress underline per tab | `DomainTabs`: 01–04, auto-advance, progress line, pause on hover/focus, keyboard arrows, no auto-advance under reduced motion |
+| "( 1 )" numbered accordion with monospace numerals | `HowAccordion` |
+| Grid-lined testimonial area | Grid-lined insights cards |
+| Full-bleed accent CTA with giant wordmark | Closing panel with our wordmark |
+| Monospace for small labels | JetBrains Mono (OFL) |
+
+Not taken: their testimonial carousel and customer logos (we have none),
+cookie banner (we set no cookies), the GSAP/Lenis scroll libraries (CSS only).

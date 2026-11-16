@@ -12,7 +12,7 @@ Legal information, not legal advice; every answer says so.
 | Styling | Tailwind v4 + shadcn/ui-style components | Components written in-repo (`src/components/ui`) in the shadcn pattern (cva + tailwind-merge); the shadcn registry was unreachable from the sandbox |
 | LLM | Anthropic TypeScript SDK, server-side only | Key in `ANTHROPIC_API_KEY`, never sent to the client |
 | Models | Classifier `claude-haiku-5-5`, answerer `claude-opus-5-5` | IDs taken from the current Anthropic model table (Nov 2026), not memory. Both set in `src/config/models.ts` |
-| Fonts | Newsreader + Inter (OFL), self-hosted via `@fontsource-variable` | No Google Fonts call at runtime |
+| Fonts | Newsreader, Inter, JetBrains Mono (OFL), self-hosted via `@fontsource-variable` | No Google Fonts call at runtime |
 | Tests | Vitest | PII scrubber, gating, retrieval |
 
 ## 2. Domain taxonomy
@@ -71,6 +71,20 @@ classifier and a template answerer built from the retrieved passages stand in
 for both models. The UI labels these answers "Mock". The gate, retrieval and
 PII scrubbing are identical in both modes.
 
+## 3a. Which law applies: time and place
+
+Added 15 Nov 2026. Every source carries `jurisdiction` (central, state,
+local, with `state`/`local`) and optional `effective_from`/`effective_until`.
+A query context `{event_date, state, local}` comes from the optional "When &
+where" fields (these win), the classifier, and rule-based reading of the text.
+Retrieval keeps only sources that apply, and ranks state and local law above
+general law. If the date or state would change the answer, the response
+lists it in `missing_context` and the UI asks for it.
+
+Example: gratuity for a resignation in March 2025 retrieves the Payment of
+Gratuity Act; one in January 2026 retrieves the Code on Social Security
+(in force from 21 Nov 2025). With no date, both are retrieved and explained.
+
 ## 4. Retrieval
 
 Interface (`src/lib/retrieval/types.ts`):
@@ -81,10 +95,16 @@ interface Retriever {
 }
 ```
 
-V0 implementation: `LocalFileRetriever`, BM25 over Markdown files in
-`sources/<domain>/`, each with YAML front-matter (`id`, `type`, `act`,
-`section` or `case`/`court`/`year`, `source_url`, `verified`). No scraping, no
-embeddings yet. A vector store can replace it behind the same interface later.
+V0 implementation: `LocalFileRetriever`, BM25 (Porter stemming) over
+Markdown files in `sources/<domain>/` with YAML front-matter, filtered by the
+query context. The live classifier adds a few legal search terms to the
+query to bridge everyday wording and statutory wording. A vector store can
+replace it behind the same interface later.
+
+Sources are scraped from India Code (`npm run scrape`, manifest in
+`scripts/scrape/manifest.ts`): about 105 sections across the four domains,
+including Delhi and Maharashtra rent law. The repealed pre-Code labour Acts
+are hand-written, as India Code no longer hosts them.
 
 ## 5. Data rules
 
@@ -104,7 +124,9 @@ embeddings yet. A vector store can replace it behind the same interface later.
 | `/` | Split-line serif hero, query box (main CTA), domains 01–04, how it works, insights cards, disclaimer strip |
 | `/ask` | Query box + answer: summary, steps, inline citation markers, source list, confidence, escalation panel, follow-ups |
 | `/privacy` | Privacy notice (DPDP) |
-| `/disclaimer` | Information-not-advice disclaimer |
+| `/disclaimer` | Disclaimer (BCI no-solicitation, information not advice) |
+| `/terms` | Terms of use |
+| (all pages) | First-visit acknowledgement gate, as on Indian law-firm sites |
 | `/find-an-advocate` | Static placeholder only |
 | `POST /api/answer` | The pipeline |
 
@@ -131,7 +153,18 @@ real questions.**
 - [x] Query flow with a mocked answer
 - [x] One domain end to end: **Employment** (prompt, seed sources, routing, gating)
 - [x] Eval harness and README table placeholder
-- [ ] Real eval run: blocked on the 30 questions and an API key
+
+## 8a. Second session (15–16 Nov 2026)
+
+- [x] 30 labelled eval questions (written by Claude; need a lawyer's review)
+- [x] Scraper and source library for all four domains (India Code)
+- [x] Law chosen by event date (old Acts vs Labour Codes) and by state/city
+- [x] Landing page redesigned on the Prime Security reference patterns
+- [x] Disclaimer gate; privacy, disclaimer and terms drafted from law-firm patterns
+- [x] Mock eval baseline in README (labelled)
+- [ ] Live eval run: blocked on an API key
+- [ ] Lawyer review of sources, eval labels and legal pages
+- [ ] Admin dashboard for verification (next)
 
 ## 9. Not in V0
 

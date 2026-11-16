@@ -1,44 +1,59 @@
 # Source library
 
 The answer model may only cite what is in here. One folder per domain (the
-folder name must match the domain `id` in `src/config/domains.ts`), one
-Markdown file per provision or judgment.
+name must match the domain `id` in `src/config/domains.ts`), one Markdown
+file per provision or judgment.
 
-**No scraping.** Add documents by hand from official sources (India Code,
-the Gazette, court websites). The retriever is `src/lib/retrieval/local.ts`
-(BM25 over these files); it can be swapped behind the `Retriever` interface.
+## Where documents come from
+
+- **`ic-*.md`: scraped from India Code** (`indiacode.gov.in`) with
+  `npm run scrape`. What to fetch is listed in `scripts/scrape/manifest.ts`.
+  The scraper uses the site's public DSpace API, one request per second, and
+  caches responses in `.cache/` (git-ignored). Re-running overwrites `ic-*`
+  files only.
+- **Everything else: written by hand.** Currently the pre-Labour-Code Acts
+  (Payment of Gratuity Act, Industrial Disputes Act, Payment of Wages Act,
+  Maternity Benefit Act). India Code no longer hosts their text since they
+  were repealed, so these are paraphrases until official text is added.
+
+Scraping official sources is allowed. Keep it polite (rate limit, cache) and
+prefer official government sites.
 
 ## File format
 
-Copy `_template.md`. Files starting with `_` and `README.md` are ignored.
-
 ```yaml
 ---
-id: pgact-1972-s4              # unique, lowercase, dashes
+id: ic-code-social-security-2020-s53   # unique, lowercase, dashes
 type: statute                  # statute | rule | judgment | notification
-title: Payment of gratuity     # short heading
-act: Payment of Gratuity Act, 1972   # statutes and rules
-section: Section 4
-# case: X v. Y                 # judgments: case, court, year, citation
-# court: Supreme Court of India
-# year: 2019
-# citation: (2019) 1 SCC 1
-source_url: https://www.indiacode.nic.in/
-verified: false                # true only after a person checks it against the official text
+title: "Payment of gratuity"
+act: "The Code on Social Security, 2020"   # statutes; judgments use case/court/year/citation
+section: "Section 53"
+source_url: https://indiacode.gov.in/handle/123456789/539659
+verified: false                # a lawyer sets true after checking (admin dashboard later)
 last_checked: 2026-11-15
-keywords: [gratuity, resignation, five years]
-note: optional, shown to maintainers only
+keywords: ["gratuity", "fixed term"]
+jurisdiction: central          # central | state | local
+# state: "Delhi"               # required for state and local law
+# local: "Pune"                # required for local law (city, district, village)
+effective_from: 2025-11-21     # law applies to events on or after this date
+# effective_until: 2025-11-20  # law applies to events on or before this date
+provenance: indiacode          # indiacode | manual
+act_id: AC_CEN_6_0_00036_202036_1623221080799
+scraped_at: 2026-11-15
+enforcement_note: "…"          # India Code's enforcement-date text, for review
+note: "…"                      # shown to the model as context
 ---
-Text of the provision, or a faithful extract. Keep one provision per file so
-citations stay precise.
+Text of the provision.
 ```
 
-## Rules
+## How the fields are used
 
-- `verified: false` documents are still retrieved, but every citation to
-  them shows "pending verification" in the UI. Set `verified: true` only
-  after checking against the official text.
-- Put the provision's own words in the body where you can. Paraphrases must
-  say they are paraphrases.
-- Note in the body if a provision has been repealed or replaced, and from
-  when.
+- **Jurisdiction:** central law always applies; state law only when the
+  user's state matches; local law only when the city also matches. State
+  and local law is ranked above general law when it applies.
+- **Effective dates:** when we know when the events happened, only law in
+  force for that period is retrieved (e.g. Gratuity Act for 2025, Code on
+  Social Security for 2026). When we do not, both are retrieved and the
+  answer explains both and asks for the date.
+- **verified:** unverified sources are shown, labelled "pending
+  verification", until a lawyer checks them.
