@@ -1,4 +1,8 @@
+"use client";
+
+import * as React from "react";
 import Link from "next/link";
+import { Menu, X } from "lucide-react";
 import { site } from "@/config/site";
 
 const nav = [
@@ -8,34 +12,61 @@ const nav = [
   { href: "/find-an-advocate", label: "Find an advocate" },
 ];
 
-export function SiteHeader() {
+export function Mark({ className = "size-6" }: { className?: string }) {
   return (
-    <header className="sticky top-0 z-40 border-b border-foreground/10 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-5 sm:px-8">
-        <Link href="/" className="flex items-baseline gap-2">
-          <span className="font-serif text-xl tracking-tight">{site.name}</span>
-          <span className="hidden text-[0.65rem] uppercase tracking-[0.14em] text-muted-foreground sm:inline">
-            Information, not advice
-          </span>
+    <svg viewBox="0 0 24 24" className={className} aria-hidden>
+      <rect x="1" y="1" width="22" height="22" rx="6" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <text x="12" y="17" textAnchor="middle" fontFamily="Georgia, serif" fontSize="14" fill="currentColor">
+        §
+      </text>
+    </svg>
+  );
+}
+
+/** Floating pill header. */
+export function SiteHeader() {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <header className="sticky top-3 z-40 px-3 sm:px-5">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between rounded-full border border-foreground/10 bg-card/80 pl-5 pr-2 backdrop-blur-md supports-[backdrop-filter]:bg-card/60">
+        <Link href="/" className="flex items-center gap-2.5" onClick={() => setOpen(false)}>
+          <Mark className="size-6 text-accent" />
+          <span className="font-serif text-[1.15rem] tracking-tight">{site.name}</span>
         </Link>
-        <nav aria-label="Main" className="flex items-center gap-5 text-sm">
+        <nav aria-label="Main" className="hidden items-center gap-7 text-sm md:flex">
           {nav.map((n) => (
-            <Link
-              key={n.href}
-              href={n.href}
-              className="hidden text-muted-foreground transition-colors hover:text-foreground md:inline"
-            >
+            <Link key={n.href} href={n.href} className="text-muted-foreground transition-colors hover:text-foreground">
               {n.label}
             </Link>
           ))}
+        </nav>
+        <div className="flex items-center gap-1">
           <Link
             href="/ask"
-            className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground transition-opacity hover:opacity-90"
+            className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-opacity hover:opacity-90"
           >
             Ask a question
           </Link>
-        </nav>
+          <button
+            type="button"
+            className="rounded-full p-2.5 text-muted-foreground hover:text-foreground md:hidden"
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            onClick={() => setOpen((o) => !o)}
+          >
+            {open ? <X className="size-5" /> : <Menu className="size-5" />}
+          </button>
+        </div>
       </div>
+      {open && (
+        <nav aria-label="Mobile" className="mx-auto mt-2 max-w-7xl rounded-2xl border border-foreground/10 bg-card p-2 md:hidden">
+          {nav.map((n) => (
+            <Link key={n.href} href={n.href} onClick={() => setOpen(false)} className="block rounded-xl px-4 py-3 text-sm hover:bg-muted">
+              {n.label}
+            </Link>
+          ))}
+        </nav>
+      )}
     </header>
   );
 }

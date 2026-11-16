@@ -93,7 +93,7 @@ export function AskClient() {
           </div>
         )}
         {state.kind === "error" && (
-          <div className="max-w-3xl rounded-lg border border-accent/40 bg-accent-soft p-5 text-sm">
+          <div className="max-w-3xl rounded-xl border border-danger/40 bg-danger-soft p-5 text-sm">
             <p>{state.message}</p>
             <button type="button" className="mt-3 font-medium underline underline-offset-4" onClick={() => void ask(state.query, hint, ctx)}>
               Try again

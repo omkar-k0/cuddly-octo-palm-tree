@@ -31,7 +31,7 @@ function Cited({ text, onCite }: { text: string; onCite: (n: number) => void }) 
             key={i}
             type="button"
             onClick={() => onCite(n)}
-            className="mx-0.5 inline-flex h-[1.15rem] min-w-[1.15rem] -translate-y-[0.35em] items-center justify-center rounded-full border border-accent/40 bg-accent-soft px-1 align-baseline text-[0.62rem] font-semibold text-accent transition-colors hover:bg-accent hover:text-accent-foreground"
+            className="mx-0.5 inline-flex h-[1.15rem] min-w-[1.15rem] -translate-y-[0.35em] items-center justify-center rounded-full border border-accent/40 bg-accent-soft px-1 align-baseline font-mono text-[0.62rem] font-semibold text-accent transition-colors hover:bg-accent hover:text-accent-foreground"
             aria-label={`Source ${n}`}
           >
             {n}
@@ -64,14 +64,14 @@ function Confidence({ value }: { value: number }) {
   return (
     <div>
       <div className="flex items-baseline justify-between text-xs">
-        <span className="uppercase tracking-[0.12em] text-muted-foreground">Confidence</span>
+        <span className="font-mono uppercase tracking-[0.12em] text-muted-foreground">Confidence</span>
         <span className="tabular-nums">
           {band.label} · {value.toFixed(2)}
         </span>
       </div>
       <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted" role="meter" aria-valuemin={0} aria-valuemax={1} aria-valuenow={value} aria-label="Confidence">
         <div
-          className={cn("h-full rounded-full", value >= 0.6 ? "bg-foreground" : "bg-accent")}
+          className={cn("h-full rounded-full", value >= 0.6 ? "bg-accent" : "bg-danger")}
           style={{ width: `${Math.max(3, value * 100)}%` }}
         />
       </div>
@@ -130,11 +130,11 @@ export function AnswerView({
         </header>
 
         {answer.escalate && (
-          <section className="rounded-lg border border-accent/40 bg-accent-soft p-5" aria-labelledby="escalate-h">
+          <section className="rounded-xl border border-danger/40 bg-danger-soft p-5" aria-labelledby="escalate-h">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
+              <AlertTriangle className="mt-0.5 size-5 shrink-0 text-danger" aria-hidden />
               <div className="space-y-2">
-                <h2 id="escalate-h" className="font-serif text-xl text-accent">
+                <h2 id="escalate-h" className="font-serif text-xl text-danger">
                   Speak to an advocate
                 </h2>
                 <ul className="space-y-1 text-sm">
@@ -188,7 +188,7 @@ export function AnswerView({
 
         {answer.steps.length > 0 && (
           <section aria-labelledby="steps-h">
-            <h2 id="steps-h" className="mb-4 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+            <h2 id="steps-h" className="mb-4 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
               What you can do
             </h2>
             <ol className="space-y-3">
@@ -206,7 +206,7 @@ export function AnswerView({
 
         {answer.follow_ups.length > 0 && (
           <section aria-labelledby="follow-h">
-            <h2 id="follow-h" className="mb-3 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+            <h2 id="follow-h" className="mb-3 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
               Questions that would change the answer
             </h2>
             <div className="flex flex-col gap-2">
@@ -233,7 +233,7 @@ export function AnswerView({
         <Confidence value={answer.confidence} />
 
         <section aria-labelledby="sources-h">
-          <h2 id="sources-h" className="mb-3 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+          <h2 id="sources-h" className="mb-3 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
             Sources {answer.citations.length > 0 && `(${answer.citations.length})`}
           </h2>
           {answer.citations.length === 0 ? (
@@ -249,7 +249,7 @@ export function AnswerView({
                     if (el) refs.current.set(c.n, el);
                   }}
                   className={cn(
-                    "rounded-md border p-4 text-sm transition-colors",
+                    "rounded-xl border p-4 text-sm transition-colors",
                     active === c.n ? "border-accent bg-accent-soft" : "border-foreground/10 bg-card",
                   )}
                 >

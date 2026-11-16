@@ -2,10 +2,12 @@ import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/newsreader";
 import "@fontsource-variable/newsreader/wght-italic.css";
+import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 import { DisclaimerGate } from "@/components/disclaimer-gate";
 import { QueryProvider } from "@/components/query-context";
 import { SiteFooter } from "@/components/site-footer";
+import { AnnouncementBar } from "@/components/announcement-bar";
 import { SiteHeader } from "@/components/site-header";
 import { site } from "@/config/site";
 
@@ -16,10 +18,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f4f1ea" },
-    { media: "(prefers-color-scheme: dark)", color: "#111215" },
-  ],
+  themeColor: "#111111",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -33,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Skip to content
         </a>
         <QueryProvider>
+          <AnnouncementBar />
           <SiteHeader />
           <main id="main" className="flex-1">
             {children}
