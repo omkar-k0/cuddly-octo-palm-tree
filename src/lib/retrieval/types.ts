@@ -62,6 +62,8 @@ export interface SourceDocument {
   body: string;
   /** Path relative to the repo root, for debugging only. */
   path: string;
+  /** sha256 of the body; a lawyer's verification is tied to this. */
+  hash: string;
 }
 
 export interface Passage {

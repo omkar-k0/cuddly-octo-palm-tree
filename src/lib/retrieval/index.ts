@@ -1,4 +1,5 @@
 import { gating } from "@/config/gating";
+import { verificationOverlay } from "@/lib/admin/store";
 import { LocalFileRetriever } from "./local";
 import type { Retriever } from "./types";
 
@@ -8,6 +9,6 @@ let retriever: Retriever | undefined;
 
 /** The retriever used by the pipeline. Swap the implementation here. */
 export function getRetriever(): Retriever {
-  retriever ??= new LocalFileRetriever(process.cwd(), gating.minRetrievalScore);
+  retriever ??= new LocalFileRetriever(process.cwd(), gating.minRetrievalScore, verificationOverlay);
   return retriever;
 }

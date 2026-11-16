@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import matter from "gray-matter";
 import { domains, type DomainId } from "@/config/domains";
+import { contentHash, effectiveStatus, type VerificationEvent } from "@/lib/admin/store";
 import { applies, emptyContext } from "@/lib/pipeline/context";
 import { BM25 } from "./bm25";
 import {
@@ -26,16 +27,25 @@ export class LocalFileRetriever implements Retriever {
   constructor(
     private root = process.cwd(),
     private minScore = 0,
+    /** Lawyers' latest decisions. Rejected sources are never returned. */
+    private overlay: () => Promise<Map<string, VerificationEvent>> = async () => new Map(),
   ) {}
 
   async search({ text, domain, k, context }: RetrievalQuery): Promise<Passage[]> {
     const index = await this.index(domain);
     const ctx = context ?? emptyContext;
+    const decisions = await this.overlay();
+    const status = (d: SourceDocument) =>
+      effectiveStatus({ hash: d.hash, frontMatterVerified: d.meta.verified }, decisions.get(d.meta.id));
     // Law specific to the user's state or city is preferred over general law,
     // so it is boosted after filtering (it already applies, by construction).
     return index
-      .search(text, k * 3, (d) => applies(d.meta, ctx))
-      .map((r) => ({ doc: r.item, score: r.item.meta.jurisdiction === "central" ? r.score : r.score * LOCAL_BOOST }))
+      .search(text, k * 3, (d) => applies(d.meta, ctx) && status(d) !== "rejected")
+      .map((r) => ({
+        // The verified flag shown to users reflects the lawyer's current decision.
+        doc: { ...r.item, meta: { ...r.item.meta, verified: status(r.item) === "verified" } },
+        score: r.item.meta.jurisdiction === "central" ? r.score : r.score * LOCAL_BOOST,
+      }))
       .filter((r) => r.score >= this.minScore)
       .sort((a, b) => b.score - a.score)
       .slice(0, k);
@@ -84,7 +94,8 @@ export async function loadDomainDocuments(root: string, domain: DomainId): Promi
       console.warn(`[sources] skipping ${rel}: ${meta.error.issues.map((i) => i.message).join("; ")}`);
       continue;
     }
-    docs.push({ meta: meta.data, domain, body: parsed.content.trim(), path: rel });
+    const body = parsed.content.trim();
+    docs.push({ meta: meta.data, domain, body, path: rel, hash: contentHash(body) });
   }
   return docs;
 }
