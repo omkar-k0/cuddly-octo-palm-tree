@@ -3,6 +3,12 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
+  // Local-only database (PGlite): loaded with a dynamic import when there is
+  // no DATABASE_URL and not on Vercel. Never bundled; kept out of server traces.
+  serverExternalPackages: ["@electric-sql/pglite"],
+  outputFileTracingExcludes: {
+    "/**": ["./node_modules/@electric-sql/pglite/**/*", "./.data/**/*"],
+  },
   // Prompts and source documents are read from disk at request time, so the
   // API route's serverless bundle on Vercel must include them.
   outputFileTracingIncludes: {
