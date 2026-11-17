@@ -1,16 +1,37 @@
+import crypto from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PGlite } from "@electric-sql/pglite";
 import type { SqlRunner } from "@/lib/db";
-import { migration003 } from "@/lib/db/migrations/003_lawyer_applications";
 import { resetRateLimit } from "@/lib/onboarding/rate-limit";
 
+/**
+ * The route runs the real validation and the real repository; only the
+ * database is faked (an in-memory table that enforces one open application
+ * per email and country, like the real index). The real SQL is covered by
+ * onboarding-applications.test.ts against PGlite.
+ */
 const dbState = vi.hoisted(() => ({ run: null as SqlRunner | null }));
 vi.mock("@/lib/db", () => ({ getDb: async () => dbState.run }));
 
 import { POST } from "@/app/api/lawyers/apply/route";
 
-let db: PGlite | undefined;
+let rows: Record<string, unknown>[] = [];
+const fakeDb: SqlRunner = async (text, params = []) => {
+  if (!text.includes("INSERT INTO lawyer_applications")) throw new Error("unexpected statement");
+  const [country, full_name, email, phone, bar_body, enrolment_number, enrolment_date, areas, jurisdictions, languages, version] = params as string[];
+  if (rows.some((r) => r.email === email && r.country === country)) {
+    throw Object.assign(new Error("duplicate key value violates unique constraint"), { code: "23505" });
+  }
+  const row = {
+    id: crypto.randomUUID(), country, status: "submitted", full_name, email, phone, bar_body, enrolment_number, enrolment_date,
+    areas, jurisdictions, languages, documents: [], consent_privacy_version: version, consented_at: new Date(), submitted_at: new Date(),
+    decided_at: null, decided_by: null, decision_reason: null, notes: [],
+  };
+  rows.push(row);
+  return [row];
+};
+
 let ipCounter = 0;
+let ip = "";
 
 const body = (over: Record<string, unknown> = {}) => ({
   country: "IN",
@@ -30,7 +51,6 @@ const body = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-let ip = "";
 const post = (payload: unknown, headers: Record<string, string> = {}, raw?: string) =>
   POST(
     new Request("https://dem-fragen.test/api/lawyers/apply", {
@@ -40,22 +60,17 @@ const post = (payload: unknown, headers: Record<string, string> = {}, raw?: stri
     }),
   );
 
-beforeEach(async () => {
+beforeEach(() => {
   resetRateLimit();
   ip = `10.0.0.${++ipCounter}`;
-  db = new PGlite();
-  const pg = db;
-  dbState.run = async (text, params) => (await pg.query<Record<string, unknown>>(text, params)).rows;
-  for (const stmt of migration003.up) await dbState.run(stmt);
+  rows = [];
+  dbState.run = fakeDb;
 });
 
-afterEach(async () => {
+afterEach(() => {
   dbState.run = null;
-  await db?.close();
   vi.restoreAllMocks();
 });
-
-const count = async () => Number((await dbState.run!("SELECT count(*) AS n FROM lawyer_applications"))[0].n);
 
 describe("POST /api/lawyers/apply", () => {
   it("stores a valid application, normalising the email", async () => {
@@ -63,8 +78,8 @@ describe("POST /api/lawyers/apply", () => {
     expect(res.status).toBe(201);
     expect(res.headers.get("cache-control")).toBe("no-store");
     expect(await res.json()).toEqual({ ok: true });
-    const [row] = await dbState.run!("SELECT email, status FROM lawyer_applications");
-    expect(row).toEqual({ email: "asha.rao@example.in", status: "submitted" });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ email: "asha.rao@example.in", status: "submitted", enrolment_date: "2015-01-01" });
   });
 
   it("returns 400 with per-field messages for invalid input, and stores nothing", async () => {
@@ -73,7 +88,7 @@ describe("POST /api/lawyers/apply", () => {
     expect(res.headers.get("cache-control")).toBe("no-store");
     const json = await res.json();
     expect(Object.keys(json.fields).sort()).toEqual(["areas", "consent", "enrolment_year"]);
-    expect(await count()).toBe(0);
+    expect(rows).toHaveLength(0);
   });
 
   it("returns 400 for a body that is not JSON or not an object", async () => {
@@ -87,7 +102,7 @@ describe("POST /api/lawyers/apply", () => {
     const again = await post(body({ full_name: "Asha R." }));
     expect(again.status).toBe(409);
     expect(again.headers.get("cache-control")).toBe("no-store");
-    expect(await count()).toBe(1);
+    expect(rows).toHaveLength(1);
   });
 
   it("returns 503 when there is no database", async () => {
@@ -101,14 +116,14 @@ describe("POST /api/lawyers/apply", () => {
     const res = await post(body({ company_website: "https://spam.example" }));
     expect(res.status).toBe(400);
     expect(JSON.stringify(await res.json())).not.toContain("spam.example");
-    expect(await count()).toBe(0);
+    expect(rows).toHaveLength(0);
   });
 
   it("rejects a form filled in under three seconds, or without timing fields", async () => {
     expect((await post(body({ started_at: 1_000_000, sent_at: 1_002_999 }))).status).toBe(400);
     expect((await post(body({ started_at: undefined }))).status).toBe(400);
     expect((await post(body({ sent_at: "later" }))).status).toBe(400);
-    expect(await count()).toBe(0);
+    expect(rows).toHaveLength(0);
     expect((await post(body({ started_at: 1_000_000, sent_at: 1_003_000 }))).status).toBe(201);
   });
 
@@ -116,7 +131,7 @@ describe("POST /api/lawyers/apply", () => {
     expect((await post(body(), { "sec-fetch-site": "cross-site" })).status).toBe(403);
     expect((await post(body(), { "sec-fetch-site": "", origin: "https://evil.example" })).status).toBe(403);
     expect((await post(body(), { "content-type": "text/plain" })).status).toBe(415);
-    expect(await count()).toBe(0);
+    expect(rows).toHaveLength(0);
   });
 
   it("rejects an oversized body", async () => {

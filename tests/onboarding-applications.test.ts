@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { PGlite } from "@electric-sql/pglite";
 import type { SqlRunner } from "@/lib/db";
 import { migration003 } from "@/lib/db/migrations/003_lawyer_applications";
@@ -55,13 +55,18 @@ const germany = (over: Record<string, unknown> = {}) =>
 let db: PGlite;
 let run: SqlRunner;
 
-beforeEach(async () => {
+// One in-memory database per file (starting PGlite takes a few seconds); tables are emptied between tests.
+beforeAll(async () => {
   db = new PGlite();
   run = async (text, params) => (await db.query<Record<string, unknown>>(text, params)).rows;
   for (const stmt of migration003.up) await run(stmt);
+}, 60_000);
+
+beforeEach(async () => {
+  await run("TRUNCATE lawyer_applications");
 });
 
-afterEach(async () => {
+afterAll(async () => {
   await db.close();
 });
 
