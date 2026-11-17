@@ -1,18 +1,12 @@
 /**
- * Lawyer accounts for the verification dashboard.
+ * Password and request helpers shared by the accounts service and the admin
+ * routes: scrypt password hashing, ADMIN_USERS parsing (used once, to
+ * bootstrap the first owners into the database), the same-origin check and a
+ * best-effort in-memory login throttle.
  *
- * - Accounts live in ADMIN_USERS: "email:hash,email:hash". Make a hash with
- *   `npm run admin:hash` (scrypt, salted). Passwords are never stored.
- * - Sessions are a signed cookie (HMAC-SHA256 with ADMIN_SESSION_SECRET),
- *   valid for 12 hours. No database needed for login.
- * - If either variable is missing, the dashboard is disabled.
- *
- * Node runtime only (node:crypto). proxy.ts runs on Node in this Next version.
+ * Sessions live in the database (see src/lib/accounts). Node runtime only.
  */
 import crypto from "node:crypto";
-
-export const SESSION_COOKIE = "admin_session";
-export const SESSION_TTL_SECONDS = 12 * 60 * 60;
 
 const SCRYPT = { N: 16384, r: 8, p: 1, keylen: 32 } as const;
 const b64url = (b: Buffer) => b.toString("base64url");
@@ -55,71 +49,10 @@ export function parseAdminUsers(raw: string | undefined): Map<string, string> {
   return users;
 }
 
-function secret(): Buffer | null {
-  const s = process.env.ADMIN_SESSION_SECRET;
-  return s && s.length >= 32 ? Buffer.from(s) : null;
-}
-
-export function adminConfigured(): boolean {
-  return !!secret() && parseAdminUsers(process.env.ADMIN_USERS).size > 0;
-}
-
-let dummyHash: string | undefined;
-
-/** Check an email and password against ADMIN_USERS. Returns the normalised email or null. */
-export function authenticate(email: string, password: string): string | null {
-  const users = parseAdminUsers(process.env.ADMIN_USERS);
-  const key = email.trim().toLowerCase();
-  const stored = users.get(key);
-  // Unknown emails still pay for one scrypt, so timing does not reveal accounts.
-  dummyHash ??= hashPassword(crypto.randomBytes(16).toString("hex"));
-  const ok = verifyPassword(password, stored ?? dummyHash);
-  return ok && stored ? key : null;
-}
-
-export interface Session {
-  email: string;
-  exp: number; // unix seconds
-}
-
-function sign(payload: string, key: Buffer) {
-  return b64url(crypto.createHmac("sha256", key).update(payload).digest());
-}
-
-export function createSessionToken(email: string, now = Date.now()): string {
-  const key = secret();
-  if (!key) throw new Error("ADMIN_SESSION_SECRET is not set (min 32 characters)");
-  const payload = b64url(Buffer.from(JSON.stringify({ email, exp: Math.floor(now / 1000) + SESSION_TTL_SECONDS })));
-  return `${payload}.${sign(payload, key)}`;
-}
-
-export function verifySessionToken(token: string | undefined, now = Date.now()): Session | null {
-  const key = secret();
-  if (!key || !token) return null;
-  const [payload, mac] = token.split(".");
-  if (!payload || !mac) return null;
-  const expected = Buffer.from(sign(payload, key));
-  const given = Buffer.from(mac);
-  if (expected.length !== given.length || !crypto.timingSafeEqual(expected, given)) return null;
-  try {
-    const s = JSON.parse(Buffer.from(payload, "base64url").toString()) as Session;
-    if (typeof s.email !== "string" || typeof s.exp !== "number" || s.exp * 1000 < now) return null;
-    // The account must still exist: removing someone from ADMIN_USERS ends their session.
-    if (!parseAdminUsers(process.env.ADMIN_USERS).has(s.email)) return null;
-    return s;
-  } catch {
-    return null;
-  }
-}
-
-export function sessionCookieOptions() {
-  return {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict" as const,
-    path: "/",
-    maxAge: SESSION_TTL_SECONDS,
-  };
+/** Set-Cookie value for a session cookie: httpOnly, SameSite=Strict, Secure in production. */
+export function sessionCookie(name: string, value: string, maxAgeSeconds: number): string {
+  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  return `${name}=${value}; Path=/; Max-Age=${maxAgeSeconds}; HttpOnly; SameSite=Strict${secure}`;
 }
 
 /**
@@ -155,4 +88,8 @@ export function noteFailure(key: string, now = Date.now()) {
 }
 export function clearFailures(key: string) {
   attempts.delete(key);
+}
+/** Tests only: forget every recorded failure. */
+export function resetThrottleForTests() {
+  attempts.clear();
 }

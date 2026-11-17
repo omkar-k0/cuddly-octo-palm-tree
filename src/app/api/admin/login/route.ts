@@ -1,46 +1,36 @@
 import { z } from "zod";
-import {
-  adminConfigured,
-  authenticate,
-  clearFailures,
-  createSessionToken,
-  noteFailure,
-  sameOrigin,
-  SESSION_COOKIE,
-  sessionCookieOptions,
-  throttled,
-} from "@/lib/admin/auth";
+import { accountsAvailable, SESSION_COOKIE, SESSION_TTL_SECONDS, signIn } from "@/lib/accounts";
+import { sameOrigin, sessionCookie } from "@/lib/admin/auth";
 
 const Body = z.object({ email: z.string().max(200), password: z.string().max(500) });
 const NO_STORE = { "Cache-Control": "no-store" };
+const fail = (status: number, error: string) => Response.json({ error }, { status, headers: NO_STORE });
+
+const UNAVAILABLE = "Sign-in is unavailable: no accounts database is configured or reachable (DATABASE_URL).";
 
 export async function POST(request: Request) {
-  if (!sameOrigin(request)) return Response.json({ error: "Bad origin." }, { status: 403, headers: NO_STORE });
-  if (!adminConfigured()) {
-    return Response.json(
-      { error: "The dashboard is not configured. Set ADMIN_USERS and ADMIN_SESSION_SECRET." },
-      { status: 503, headers: NO_STORE },
-    );
-  }
-
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-  if (throttled(ip)) {
-    return Response.json({ error: "Too many attempts. Try again in 15 minutes." }, { status: 429, headers: NO_STORE });
-  }
+  if (!sameOrigin(request)) return fail(403, "Bad origin.");
+  if (!(await accountsAvailable())) return fail(503, UNAVAILABLE);
 
   const parsed = Body.safeParse(await request.json().catch(() => null));
-  const email = parsed.success ? authenticate(parsed.data.email, parsed.data.password) : null;
-  if (!email) {
-    noteFailure(ip);
-    return Response.json({ error: "Email or password is incorrect." }, { status: 401, headers: NO_STORE });
+  if (!parsed.success) return fail(400, "Enter your email and password.");
+
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
+  const result = await signIn(parsed.data.email, parsed.data.password, { ip });
+  if (!result.ok) {
+    switch (result.error) {
+      case "throttled":
+        return fail(429, "Too many attempts. Try again in 15 minutes.");
+      case "suspended":
+        return fail(403, "This account is suspended. Ask the site owner.");
+      case "unavailable":
+        return fail(503, UNAVAILABLE);
+      default:
+        return fail(401, "Email or password is incorrect.");
+    }
   }
 
-  clearFailures(ip);
   const res = Response.json({ ok: true }, { headers: NO_STORE });
-  const opts = sessionCookieOptions();
-  res.headers.append(
-    "Set-Cookie",
-    `${SESSION_COOKIE}=${createSessionToken(email)}; Path=${opts.path}; Max-Age=${opts.maxAge}; HttpOnly; SameSite=Strict${opts.secure ? "; Secure" : ""}`,
-  );
+  res.headers.append("Set-Cookie", sessionCookie(SESSION_COOKIE, result.token, SESSION_TTL_SECONDS));
   return res;
 }
