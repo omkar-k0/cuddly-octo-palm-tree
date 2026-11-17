@@ -9,6 +9,7 @@ const cols = [
       { href: "/ask", label: "Ask a question" },
       { href: "/#domains", label: "Areas we cover" },
       { href: "/find-an-advocate", label: "Find an advocate" },
+      { href: "/lawyers/join", label: "For lawyers: become a reviewer" },
     ],
   },
   {

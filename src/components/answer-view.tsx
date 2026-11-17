@@ -265,7 +265,7 @@ export function AnswerView({
                       <div className="flex flex-wrap items-center gap-2 pt-1">
                         {c.verified ? (
                           <Badge variant="verified">
-                            <ShieldCheck className="size-3" aria-hidden /> Verified
+                            <ShieldCheck className="size-3" aria-hidden /> {c.reviewed_by ? `Verified by ${c.reviewed_by}` : "Verified"}
                           </Badge>
                         ) : (
                           <Badge variant="warning">Pending verification</Badge>

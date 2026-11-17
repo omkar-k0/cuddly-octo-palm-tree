@@ -2,7 +2,9 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import matter from "gray-matter";
 import { domains, type DomainId } from "@/config/domains";
+import { REVIEWER_ATTRIBUTION } from "@/config/reviewers";
 import { contentHash, effectiveStatus, type VerificationEvent } from "@/lib/admin/store";
+import { reviewerLabelForUser } from "@/lib/onboarding/attribution";
 import { applies, emptyContext } from "@/lib/pipeline/context";
 import { BM25 } from "./bm25";
 import {
@@ -20,6 +22,9 @@ import {
  * never any user text.
  */
 const LOCAL_BOOST = 1.6;
+
+/** Worker A adds `reviewer_user_id` to VerificationEvent; read it without depending on that change. */
+type ReviewedEvent = VerificationEvent & { reviewer_user_id?: string | null };
 
 export class LocalFileRetriever implements Retriever {
   private indexes = new Map<DomainId, Promise<BM25<SourceDocument>>>();
@@ -39,7 +44,7 @@ export class LocalFileRetriever implements Retriever {
       effectiveStatus({ hash: d.hash, frontMatterVerified: d.meta.verified }, decisions.get(d.meta.id));
     // Law specific to the user's state or city is preferred over general law,
     // so it is boosted after filtering (it already applies, by construction).
-    return index
+    const results = index
       .search(text, k * 3, (d) => applies(d.meta, ctx) && status(d) !== "rejected")
       .map((r) => ({
         // The verified flag shown to users reflects the lawyer's current decision.
@@ -49,6 +54,22 @@ export class LocalFileRetriever implements Retriever {
       .filter((r) => r.score >= this.minScore)
       .sort((a, b) => b.score - a.score)
       .slice(0, k);
+
+    // Reviewer names: only when reviewers are shown by name, and only for verified sources.
+    // In anonymous mode this block is skipped, so there are no account lookups at all.
+    if (REVIEWER_ATTRIBUTION === "named") {
+      const labels = new Map<string, Promise<string | null>>();
+      await Promise.all(
+        results.map(async (r) => {
+          if (!r.doc.meta.verified) return;
+          const userId = (decisions.get(r.doc.meta.id) as ReviewedEvent | undefined)?.reviewer_user_id;
+          if (!userId) return;
+          if (!labels.has(userId)) labels.set(userId, reviewerLabelForUser(userId));
+          r.doc.meta.reviewed_by = await labels.get(userId);
+        }),
+      );
+    }
+    return results;
   }
 
   async documents(domain: DomainId): Promise<SourceDocument[]> {

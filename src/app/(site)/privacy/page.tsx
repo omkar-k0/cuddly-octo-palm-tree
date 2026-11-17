@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Privacy notice" };
  */
 export default function PrivacyPage() {
   return (
-    <ProsePage eyebrow="Privacy" title="Privacy notice" updated="15 November 2026">
+    <ProsePage eyebrow="Privacy" title="Privacy notice" updated="17 November 2026">
       <DraftNote>
         Draft for review by an advocate before launch. Text in [square brackets] is a placeholder to be completed.
       </DraftNote>
@@ -151,6 +151,58 @@ export default function PrivacyPage() {
       <p>
         We will update this page if our practices change and revise the date at the top. See also our{" "}
         <Link href="/disclaimer">disclaimer</Link> and <Link href="/terms">terms of use</Link>.
+      </p>
+
+      <h2 id="reviewer-applicants" className="scroll-mt-28">
+        14. Lawyers who apply to become reviewers
+      </h2>
+      <DraftNote>
+        Draft for review by a lawyer before the application form opens. Text in [square brackets] is a placeholder.
+      </DraftNote>
+      <p>
+        This section applies only to lawyers who apply to review sources through the form at{" "}
+        <Link href="/lawyers/join">/lawyers/join</Link>. Sections 3 to 8 describe the question service and do not apply
+        to applications.
+      </p>
+      <ul>
+        <li>
+          <strong>What we collect.</strong> Your name, email address and phone number; your State Bar Council (India) or
+          Rechtsanwaltskammer (Germany); your enrolment number and year of enrolment (India) or date of admission
+          (Germany); the areas of law, states or Länder and languages you choose; and a record of your consent (the
+          version of this section and the time). Later, we may ask for documents such as your enrolment certificate. We
+          do not ask for documents through the form yet; if we ask by email, we will say what we need and why.
+        </li>
+        <li>
+          <strong>Why.</strong> To verify your professional standing and decide whether to invite you to review sources,
+          and to contact you about your application. We do not use it for marketing, and we do not sell it. Reviewers are
+          not shown publicly for now.
+        </li>
+        <li>
+          <strong>Basis.</strong> Your consent, which you give by ticking the box on the form. You can withdraw it at any
+          time by writing to the Grievance Officer in section 1; we will then stop processing your application.
+        </li>
+        <li>
+          <strong>Who processes it.</strong> Our team, and our hosting and database providers as Data Processors:
+          [database provider] and [hosting provider]. [Confirm processing locations.]
+        </li>
+        <li>
+          <strong>How long we keep it.</strong> Applications that are rejected or withdrawn are deleted after [period].
+          If you are approved, we keep your details while you act as a reviewer and for [period] afterwards, together
+          with the record of the sources you verified. Documents are deleted once we have checked them, or after
+          [period] at the latest. [Confirm.]
+        </li>
+        <li>
+          <strong>Your rights.</strong> As in section 10: to a summary of your data, to correction and erasure, to
+          grievance redressal, to nominate another person, and to withdraw consent. Write to the Grievance Officer in
+          section 1.
+        </li>
+      </ul>
+      <p>
+        <strong>Applicants in Germany.</strong> If you apply from Germany, the General Data Protection Regulation
+        (GDPR) applies to your data as well, including your rights of access, rectification, erasure, restriction,
+        portability and objection, and your right to complain to a supervisory authority. A separate German privacy
+        notice (Datenschutzerklärung) will follow in V3 and will replace this paragraph for German applicants. [Until
+        then, have a German lawyer confirm that German applications can be accepted on this basis.]
       </p>
     </ProsePage>
   );
