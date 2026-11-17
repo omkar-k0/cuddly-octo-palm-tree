@@ -1,23 +1,24 @@
 import "server-only";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { SESSION_COOKIE, verifySessionToken, type Session } from "./auth";
+/**
+ * Dashboard session helpers, kept for existing callers. Sessions are database
+ * sessions now (src/lib/accounts); any signed-in role may use /admin.
+ */
+import { getCurrentUser, requireUser, userFromRequest } from "@/lib/accounts/session";
+import type { SessionUser } from "@/lib/accounts/types";
 
-/** Current lawyer session, or null. Reads the request: call inside <Suspense>. */
+export type Session = SessionUser;
+
+/** Current user, or null. Reads the request: call inside <Suspense>. */
 export async function getSession(): Promise<Session | null> {
-  return verifySessionToken((await cookies()).get(SESSION_COOKIE)?.value);
+  return getCurrentUser();
 }
 
-/** For admin pages: the session, or a redirect to the login page. */
+/** For admin pages: the user, or a redirect to the login page. */
 export async function requireSession(): Promise<Session> {
-  const s = await getSession();
-  if (!s) redirect("/admin/login");
-  return s;
+  return requireUser();
 }
 
-/** For admin API routes: the session from the request, or null. */
-export function sessionFromRequest(request: Request): Session | null {
-  const raw = request.headers.get("cookie") ?? "";
-  const m = new RegExp(`(?:^|;\\s*)${SESSION_COOKIE}=([^;]+)`).exec(raw);
-  return verifySessionToken(m ? decodeURIComponent(m[1]) : undefined);
+/** For admin API routes: the user from the request, or null. */
+export async function sessionFromRequest(request: Request): Promise<Session | null> {
+  return userFromRequest(request);
 }

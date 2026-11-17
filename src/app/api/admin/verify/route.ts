@@ -20,8 +20,8 @@ const fail = (status: number, error: string) => Response.json({ error }, { statu
 
 /** POST /api/admin/verify: record a lawyer's decision on one source. */
 export async function POST(request: Request) {
-  const session = sessionFromRequest(request);
-  if (!session) return fail(401, "Not signed in.");
+  const user = await sessionFromRequest(request);
+  if (!user) return fail(401, "Not signed in.");
   if (!sameOrigin(request)) return fail(403, "Bad origin.");
 
   const parsed = Body.safeParse(await request.json().catch(() => null));
@@ -41,7 +41,8 @@ export async function POST(request: Request) {
       source_id: body.source_id,
       status: body.status,
       note: body.note.trim(),
-      reviewer: session.email,
+      reviewer: user.email,
+      reviewer_user_id: user.id,
       content_hash: body.content_hash,
     });
     invalidateOverlay();
