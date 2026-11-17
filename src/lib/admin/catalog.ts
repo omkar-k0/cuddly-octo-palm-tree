@@ -12,7 +12,7 @@ export interface CatalogEntry {
 
 export interface Catalog {
   entries: CatalogEntry[];
-  storeKind: "postgres" | "file" | null;
+  storeKind: "postgres" | null;
   storeError: string | null;
 }
 
