@@ -22,8 +22,9 @@
  *   re-invite). Invalidates older links. Audit "user.setup_link".
  * - completeSetup(token, password): consume a setup token, set the password
  *   (min 12 chars), mark active, start a session. Audit "user.setup_complete".
- * - changePassword(userId, current, next): checks current; revokes other
- *   sessions. Audit "user.password_change".
+ * - changePassword(userId, current, next, keepSessionId?): checks current;
+ *   revokes every session except keepSessionId (SessionUser.session_id of the
+ *   requester); with no keepSessionId, revokes all. Audit "user.password_change".
  * - setUserStatus(userId, status, actor): suspend or reactivate. Suspending
  *   revokes sessions. Never leaves zero active owners. Throws
  *   AccountError("forbidden" | "last_owner" | "not_found"). Audit

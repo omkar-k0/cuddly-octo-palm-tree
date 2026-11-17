@@ -126,9 +126,6 @@ export async function recordAudit(entry: Omit<AuditEntry, "id" | "created_at" | 
 
 // ── Sessions ───────────────────────────────────────────────────────────────
 
-/** Session id most recently validated in this process, per user: changePassword keeps that one. */
-const lastSession = new Map<string, string>();
-
 async function startSession(run: SqlRunner, userId: string): Promise<string> {
   const token = newToken();
   await run(`INSERT INTO sessions (id, user_id, expires_at) VALUES ($1, $2, now() + $3::int * interval '1 second')`, [
@@ -136,7 +133,6 @@ async function startSession(run: SqlRunner, userId: string): Promise<string> {
     userId,
     SESSION_TTL_SECONDS,
   ]);
-  lastSession.set(userId, sha256(token));
   return token;
 }
 
@@ -218,7 +214,6 @@ export async function getSessionUser(token: string | undefined): Promise<Session
     await run("UPDATE sessions SET last_seen_at = now() WHERE id = $1", [id]);
   }
   const user = rowToUser(row);
-  lastSession.set(user.id, id);
   return { ...user, session_id: id };
 }
 
@@ -233,7 +228,6 @@ export async function revokeAllSessions(userId: string, actor: Actor | null): Pr
   if (!target) throw new AccountError("not_found");
   if (actor && actor.id !== userId && !canManage(actor, target)) throw new AccountError("forbidden");
   await revokeSessions(run, userId);
-  lastSession.delete(userId);
   await audit(run, { actor_user_id: actor?.id ?? null, action: "session.revoke_all", target_type: "user", target_id: userId, details: {} });
 }
 
@@ -345,14 +339,15 @@ export async function completeSetup(
 }
 
 /**
- * Keeps the session this process most recently validated for the user (the
- * request making the change, which called userFromRequest/getCurrentUser
- * first); every other session is revoked.
+ * Revokes every session of the user except keepSessionId (the session id, as
+ * in SessionUser.session_id, of the request making the change). Without
+ * keepSessionId, every session is revoked.
  */
 export async function changePassword(
   userId: string,
   current: string,
   next: string,
+  keepSessionId?: string,
 ): Promise<{ ok: true } | { ok: false; error: "invalid_current" | "weak_password" }> {
   const run = await requireDb();
   const [row] = UUID_RE.test(userId) ? await run("SELECT password_hash FROM users WHERE id = $1 AND status = 'active'", [userId]) : [];
@@ -363,7 +358,7 @@ export async function changePassword(
   const pwHash = hashPassword(next);
   await withTx(async (tx) => {
     await tx("UPDATE users SET password_hash = $2 WHERE id = $1", [userId, pwHash]);
-    await revokeSessions(tx, userId, lastSession.get(userId));
+    await revokeSessions(tx, userId, keepSessionId);
     await audit(tx, { actor_user_id: userId, action: "user.password_change", target_type: "user", target_id: userId, details: {} });
   });
   return { ok: true };
@@ -388,8 +383,7 @@ export async function setUserStatus(userId: string, status: Exclude<UserStatus, 
       const [u] = await run(`UPDATE users SET status = 'suspended' WHERE id = $1 RETURNING ${USER_COLS}`, [userId]);
       await revokeSessions(run, userId);
       await run("UPDATE account_tokens SET used_at = now() WHERE user_id = $1 AND used_at IS NULL", [userId]);
-      lastSession.delete(userId);
-      await audit(run, { actor_user_id: actor.id, action: "user.suspend", target_type: "user", target_id: userId, details: {} });
+          await audit(run, { actor_user_id: actor.id, action: "user.suspend", target_type: "user", target_id: userId, details: {} });
       return rowToUser(u);
     }
     // Reactivating someone who never set a password puts them back to "invited".
@@ -438,9 +432,4 @@ export async function listAudit(opts?: { limit?: number; targetId?: string }): P
     details: (typeof r.details === "string" ? JSON.parse(r.details) : (r.details ?? {})) as Record<string, unknown>,
     created_at: iso(r.created_at),
   }));
-}
-
-/** Tests only: forget per-process caches (bootstrap is per database runner already). */
-export function resetAccountsForTests() {
-  lastSession.clear();
 }

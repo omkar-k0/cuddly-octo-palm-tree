@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   if (next.length < MIN_PASSWORD) return weakPassword();
 
   try {
-    const result = await changePassword(auth.user.id, current, next);
+    const result = await changePassword(auth.user.id, current, next, auth.user.session_id);
     if (!result.ok) {
       return result.error === "invalid_current"
         ? fail(400, "Your current password is not correct.", "invalid_current")
