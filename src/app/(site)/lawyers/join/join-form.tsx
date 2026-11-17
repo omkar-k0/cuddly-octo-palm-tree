@@ -149,11 +149,12 @@ export function JoinForm() {
     return (
       <div role="status" className="rounded-xl border border-verified/30 bg-card p-6">
         <p className="flex items-center gap-2 font-serif text-2xl">
-          <CheckCircle2 className="size-6 text-verified" aria-hidden /> Application received
+          <CheckCircle2 className="size-6 text-verified" aria-hidden /> Thank you
         </p>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Thank you. Our team will verify your enrolment and write to you at <strong className="text-foreground">{done}</strong>. We
-          may ask you for your enrolment certificate by email. You do not need to apply again.
+          Thank you. If this is a new application, our team will review it and contact you at{" "}
+          <strong className="text-foreground">{done}</strong>. We may ask you for your enrolment certificate by email. You do not need to
+          apply again.
         </p>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           If you do not hear from us, or something above is wrong, reply to our email rather than submitting a second application.

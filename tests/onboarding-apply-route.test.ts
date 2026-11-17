@@ -97,11 +97,13 @@ describe("POST /api/lawyers/apply", () => {
     expect((await post(null, {}, "null")).status).toBe(400);
   });
 
-  it("returns 409 for a second open application from the same email", async () => {
-    expect((await post(body())).status).toBe(201);
+  it("answers a second open application from the same email exactly like a new one, and stores nothing", async () => {
+    const first = await post(body());
+    expect(first.status).toBe(201);
     const again = await post(body({ full_name: "Asha R." }));
-    expect(again.status).toBe(409);
+    expect(again.status).toBe(201);
     expect(again.headers.get("cache-control")).toBe("no-store");
+    expect(await again.json()).toEqual(await first.json());
     expect(rows).toHaveLength(1);
   });
 

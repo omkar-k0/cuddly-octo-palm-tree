@@ -55,7 +55,9 @@ export async function POST(request: Request) {
   } catch (e) {
     if (e instanceof OnboardingUnavailable) return fail(503, "Applications are not open right now. Please try again later.");
     if (e instanceof DuplicateApplication) {
-      return fail(409, "An application for this email address is already being processed. We will contact you.");
+      // Same answer as a new application, so the endpoint does not reveal whether an email has applied.
+      // The partial unique index has already prevented the duplicate row. Nothing is logged.
+      return Response.json({ ok: true }, { status: 201, headers: NO_STORE });
     }
     console.error(`[apply] save failed: ${(e as Error).name}`);
     return fail(500, "We could not save your application. Please try again later.");
