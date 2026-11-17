@@ -54,7 +54,14 @@ export const sourceMetaSchema = z
     message: "local law needs `local`",
   });
 
-export type SourceMeta = z.infer<typeof sourceMetaSchema>;
+export type SourceMeta = z.infer<typeof sourceMetaSchema> & {
+  /**
+   * Public label of the lawyer who verified this source ("Adv. <name>").
+   * Not front-matter: retrieval sets it from the verification overlay, and
+   * only when REVIEWER_ATTRIBUTION is "named" and the source is verified.
+   */
+  reviewed_by?: string | null;
+};
 
 export interface SourceDocument {
   meta: SourceMeta;

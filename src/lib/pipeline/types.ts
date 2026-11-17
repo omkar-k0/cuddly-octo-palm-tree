@@ -24,6 +24,8 @@ export interface Citation {
   pinpoint: string | null;
   source_url: string | null;
   verified: boolean;
+  /** Public label of the reviewing lawyer ("Adv. <name>"), only when REVIEWER_ATTRIBUTION is "named". */
+  reviewed_by: string | null;
   jurisdiction: "central" | "state" | "local";
   state: string | null;
   local: string | null;
