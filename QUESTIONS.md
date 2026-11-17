@@ -80,6 +80,21 @@
     but is personal data in combination with a question; the notice covers
     it. OK?
 
+### Lawyer onboarding
+
+19. **Bar council and chamber lists.** The State Bar Council and
+    Rechtsanwaltskammer lists in `src/config/onboarding.ts` were compiled from
+    memory. Check them against the official registers.
+20. **Privacy notice for applicants.** The reviewer-applicant section of the
+    privacy notice (`id="reviewer-applicants"`) has placeholders and needs
+    lawyer review.
+21. **Bar Council of India rule.** Confirm the rule reference in
+    `src/config/reviewers.ts`.
+22. **Rate limits are per server instance.** The sign-in and application
+    limits are in memory on each instance. A shared store such as Upstash is
+    planned in the roadmap's launch-safety milestone.
+23. **Two-factor login.** Two-factor login for team admins is future scope.
+
 ### Brand
 
 18. **Name.** Decided: "Dem Fragen" (`src/config/site.ts`).

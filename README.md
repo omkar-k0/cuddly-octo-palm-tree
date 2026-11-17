@@ -50,10 +50,33 @@ last two). Effects on answers, within a minute:
   text reviewed. If the text later changes (e.g. after a re-scrape), the
   source shows "Text changed" and counts as unverified until reviewed again.
 
-Decisions are an append-only log in Postgres (`DATABASE_URL`), or
-`.data/verifications.json` locally. Accounts come from `ADMIN_USERS`
-(email plus scrypt hash, `npm run -s admin:hash`) and sessions are signed
-with `ADMIN_SESSION_SECRET`. See [DEPLOY.md](DEPLOY.md).
+Decisions are an append-only log in Postgres (`DATABASE_URL`). Locally, with
+no `DATABASE_URL`, an embedded database (PGlite) in `.data/pglite` is used.
+
+Accounts live in the database, with sessions and an audit log. `ADMIN_USERS`
+(email plus scrypt hash, `npm run -s admin:hash`) is used only once, to create
+the first owner when the users table is empty. Everyone else is added in
+`/team`. See [DEPLOY.md](DEPLOY.md).
+
+## Team and lawyer onboarding
+
+Roles:
+
+- **Owner:** manages everyone, including other owners and admins.
+- **Admin:** manages lawyers only.
+- **Lawyer:** reviews sources for their country (India or Germany).
+
+Pages:
+
+- `/team`: the team dashboard. Add members, suspend or reactivate them, issue
+  a new one-time setup link, sign someone out everywhere, and read the audit
+  log. There is no email yet: the owner sends each setup link privately.
+- `/team/applications`: lawyer applications, read-only for now.
+- `/lawyers/join`: the public form where lawyers apply to become reviewers.
+- `/account`: your own profile and password change. `/account/setup` is the
+  page a setup link opens.
+
+The plan is in [docs/lawyer-onboarding-step1.md](docs/lawyer-onboarding-step1.md).
 
 ## Run it
 

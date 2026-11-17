@@ -71,3 +71,27 @@ Every page and handler checks the session and role itself.
 - Existing verification flow unchanged for signed-in users.
 - An application can be submitted at `/lawyers/join` and seen at
   `/team/applications`.
+
+## Status
+
+Step 1 is done. The step 2 framework is in place: the application page,
+the API, the `lawyer_applications` table and the read-only applications
+list. Decisions on applications, document upload and the reviewer agreement
+are still to come (see the roadmap).
+
+Deviations from the plan:
+
+- `src/lib/db` has extra exports: `getDriver`, `withTransaction` and
+  `driverFromRunner`.
+- `changePassword` has an optional fourth parameter, `keepSessionId`. The
+  password route passes the requester's session id. Without it, all sessions
+  are revoked.
+- The rules for who may revoke sessions and who may issue setup links are
+  enforced inside the accounts service, not only in the routes.
+- Worker C added a type-only `reviewed_by` field in
+  `src/lib/retrieval/types.ts`. Nothing sets or reads it yet.
+- A duplicate open application now returns 201 `{ ok: true }`, the same as a
+  new one, so the endpoint does not reveal whether an email has applied.
+  The database's partial unique index still prevents duplicates.
+- The per-IP sign-in limit is 30 failures per 15 minutes. The per-email
+  limit stays at 5.

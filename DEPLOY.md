@@ -17,7 +17,7 @@ About 15 minutes. You need a Vercel account with access to the GitHub repo
 After this, every push to `main` deploys to production and every pull
 request gets a preview URL.
 
-## 2. Add a database for verification decisions
+## 2. Add a database for accounts and verification decisions
 
 1. In the project: **Storage → Create Database → Neon (Postgres)**, from the
    Marketplace. Free tier is enough.
@@ -26,7 +26,9 @@ request gets a preview URL.
 3. Connect it to the project for **Production** and **Preview**. Vercel adds
    `DATABASE_URL` (and a few other `PG*`/`DATABASE_*` variables) for you.
 
-The table is created automatically the first time a lawyer saves a decision.
+`DATABASE_URL` is required on Vercel. It holds the team and lawyer
+accounts, sessions, the audit log, lawyer applications and verification
+decisions. The tables are created automatically on first use.
 
 ## 3. Environment variables
 
@@ -35,28 +37,49 @@ Preview if you want previews to have the dashboard):
 
 | Name | Value | Notes |
 |---|---|---|
-| `ADMIN_SESSION_SECRET` | output of `npm run -s admin:secret` | 32+ random characters. Changing it signs everyone out. |
-| `ADMIN_USERS` | `lawyer@firm.in:scrypt$…` | One `email:hash` per lawyer, comma-separated. Make each hash with `npm run -s admin:hash` and type that lawyer's password (12+ characters). |
-| `DATABASE_URL` | set by Neon in step 2 | |
+| `ADMIN_USERS` | `you@firm.in:scrypt$…` | Only for the first owner. One `email:hash` per owner, comma-separated. Make each hash with `npm run -s admin:hash` and type that person's password (12+ characters). |
+| `DATABASE_URL` | set by Neon in step 2 | Required. |
 | `ANTHROPIC_API_KEY` | later | Until set, answers are mock and labelled "Mock answer". |
 
-To make hashes on your own machine:
+`ADMIN_SESSION_SECRET` is no longer needed. If it is set in Vercel, delete it.
+
+To make a hash on your own machine:
 
 ```bash
 npm install
 ```
 
 ```bash
-npm run -s admin:secret
-```
-
-```bash
 npm run -s admin:hash
 ```
 
-Send each lawyer their password over a separate channel. To remove a lawyer,
-delete their entry from `ADMIN_USERS` and redeploy; their session stops
-working at once.
+### Team and lawyer accounts
+
+`ADMIN_USERS` creates the first owner when that person first signs in to an
+empty database. After that, the variable is not used again, and you manage
+everyone in the app.
+
+To add a team admin or a lawyer:
+
+1. Sign in at `/admin/login` and open `/team`.
+2. Click **Add member**, fill in the details, and save.
+3. Copy the one-time setup link and send it to the person privately (not in
+   a public channel). It is valid for 72 hours and works once. They choose
+   their own password.
+
+On a member's page in `/team`:
+
+- **Suspend** stops them signing in and signs them out at once. **Reactivate**
+  undoes it. The last active owner cannot be suspended.
+- **New setup link** issues a fresh link (for a lost link or a password
+  reset). Earlier links stop working.
+- **Sign out everywhere** ends all of that person's sessions without
+  suspending them.
+
+Lawyers who apply at `/lawyers/join` appear in `/team/applications`.
+
+**After this deploy, everyone must sign in again.** The old session cookies
+stop working.
 
 ## 4. Deploy and check
 
@@ -65,7 +88,7 @@ working at once.
    - `/` loads, the disclaimer gate appears once.
    - Ask a question on `/ask`: you get an answer marked "Mock answer"
      until the API key is set.
-   - `/admin` redirects to `/admin/login`. Sign in as a lawyer, open a
+   - `/admin` redirects to `/admin/login`. Sign in as the owner, open a
      source, mark it Verified. The banner at the top must **not** say "No
      verification database is configured".
    - Ask a question that cites that source: its citation now shows
