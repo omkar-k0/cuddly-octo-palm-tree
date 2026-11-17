@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { AuditTable } from "@/components/team/audit-table";
 import { listAudit, listUsers, type AuditEntry } from "@/lib/accounts";
@@ -19,6 +20,8 @@ export default function AuditPage() {
 }
 
 async function Audit() {
+  // Always render per request, whatever the session helper does internally.
+  await connection();
   await requireUser(["owner", "admin"]);
   let entries: AuditEntry[] = [];
   const names: Record<string, string> = {};

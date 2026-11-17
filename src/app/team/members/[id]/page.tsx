@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { AuditTable } from "@/components/team/audit-table";
 import { RoleBadge, UserStatusBadge } from "@/components/team/badges";
@@ -24,6 +25,8 @@ export default function MemberPage({ params }: { params: Promise<{ id: string }>
 }
 
 async function Member({ params }: { params: Promise<{ id: string }> }) {
+  // Always render per request, whatever the session helper does internally.
+  await connection();
   const me = await requireUser(["owner", "admin"]);
   const { id } = await params;
   if (!UUID.test(id)) notFound();

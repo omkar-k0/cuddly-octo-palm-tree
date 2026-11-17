@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { AddMemberForm } from "@/components/team/add-member-form";
 import { RoleBadge, UserStatusBadge } from "@/components/team/badges";
@@ -20,6 +21,8 @@ export default function TeamPage() {
 }
 
 async function Members() {
+  // Always render per request, whatever the session helper does internally.
+  await connection();
   const me = await requireUser(["owner", "admin"]);
   let users: User[] = [];
   let failed = false;

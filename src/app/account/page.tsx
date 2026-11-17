@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { ChangePasswordForm, SignOutEverywhere } from "@/components/team/account-forms";
 import { RoleBadge } from "@/components/team/badges";
@@ -18,6 +19,8 @@ export default function AccountPage() {
 }
 
 async function Account() {
+  // Always render per request, whatever the session helper does internally.
+  await connection();
   const user = await requireUser();
   return (
     <>
