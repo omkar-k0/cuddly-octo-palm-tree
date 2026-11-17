@@ -49,8 +49,9 @@ export default function ApplicationsPage({ searchParams }: { searchParams: Promi
 }
 
 async function Applications({ searchParams }: { searchParams: Promise<Search> }) {
-  await requireUser(["owner", "admin"]);
+  // Reading searchParams first makes this request-time work, so nothing here runs during prerender.
   const sp = await searchParams;
+  await requireUser(["owner", "admin"]);
   const country = sp.country === "IN" || sp.country === "DE" ? (sp.country as Country) : undefined;
   const status = (APPLICATION_STATUSES as readonly string[]).includes(sp.status ?? "") ? (sp.status as ApplicationStatus) : undefined;
 
