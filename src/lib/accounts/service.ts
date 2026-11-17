@@ -20,6 +20,8 @@ export const MIN_PASSWORD_LENGTH = 12;
 const MAX_PASSWORD_LENGTH = 1000;
 const TOUCH_INTERVAL_MS = 5 * 60 * 1000;
 const EMAIL_FAILURE_LIMIT = 5;
+/** Much higher than the per-email limit: many people can share one IP (an office, a university). */
+const IP_FAILURE_LIMIT = 30;
 const EMAIL_FAILURE_WINDOW = "15 minutes";
 /** Lock key serialising changes that could leave zero active owners, and the bootstrap. */
 const OWNER_LOCK_KEY = 7340212;
@@ -156,7 +158,7 @@ export async function signIn(
   const key = normEmail(email);
   const ipKey = `ip:${meta.ip ?? "unknown"}`;
   const emailKey = `email:${key}`;
-  if (throttled(ipKey) || throttled(emailKey)) return { ok: false, error: "throttled" };
+  if (throttled(ipKey, Date.now(), IP_FAILURE_LIMIT) || throttled(emailKey, Date.now(), EMAIL_FAILURE_LIMIT)) return { ok: false, error: "throttled" };
 
   const [row] = await run(`SELECT ${USER_COLS}, password_hash FROM users WHERE lower(email) = $1`, [key]);
   if (row) {

@@ -153,10 +153,21 @@ describe("sign-in and sessions", () => {
     expect((await signIn("lawyer@example.com", lawyer.password, { ip: ip() })).ok).toBe(true);
   });
 
-  it("throttles per IP and per email", async () => {
-    const a = ip();
-    for (let i = 0; i < 5; i++) await signIn(`x${i}@example.com`, "nope nope nope", { ip: a });
-    expect(await signIn("owner@example.com", OWNER_PW, { ip: a })).toEqual({ ok: false, error: "throttled" });
+  it("throttles per IP only after 30 failures, and per email after 5", async () => {
+    const shared = "1.1.1.1";
+    await makeUser(asActor(await owner()), "lawyer", "b@example.com");
+    for (let i = 0; i < 5; i++) await signIn("a@example.com", "nope nope nope", { ip: shared });
+    // Five failures for a@ lock a@ but do not stop b@ from the same IP.
+    expect(await signIn("a@example.com", "nope nope nope", { ip: shared })).toEqual({ ok: false, error: "throttled" });
+    expect((await signIn("b@example.com", "a long password 1", { ip: shared })).ok).toBe(true);
+    // Many different emails from one IP: blocked at 30 failures, not before.
+    resetThrottleForTests();
+    for (let i = 0; i < 29; i++) await signIn(`x${i}@example.com`, "nope nope nope", { ip: shared });
+    expect((await signIn("owner@example.com", OWNER_PW, { ip: shared })).ok).toBe(true);
+    resetThrottleForTests();
+    for (let i = 0; i < 30; i++) await signIn(`y${i}@example.com`, "nope nope nope", { ip: shared });
+    expect(await signIn("owner@example.com", OWNER_PW, { ip: shared })).toEqual({ ok: false, error: "throttled" });
+    expect(await signIn("b@example.com", "a long password 1", { ip: shared })).toEqual({ ok: false, error: "throttled" });
 
     // Five failures for one account from different IPs lock that account for 15 minutes.
     resetThrottleForTests();
