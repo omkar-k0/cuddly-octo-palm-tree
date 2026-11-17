@@ -141,7 +141,7 @@ describe("POST /api/account/password", () => {
     const res = await passwordRoute(post("/api/account/password", body));
     expect(res.status).toBe(200);
     expect(res.headers.get("cache-control")).toBe("no-store");
-    expect(A.changePassword).toHaveBeenCalledWith(me.id, "old password here", GOOD);
+    expect(A.changePassword).toHaveBeenCalledWith(me.id, "old password here", GOOD, me.session_id);
     expect(session).toHaveBeenCalledWith(expect.any(Request), undefined);
   });
 

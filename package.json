@@ -11,8 +11,7 @@
     "test": "vitest run",
     "eval": "tsx eval/run-eval.ts",
     "scrape": "tsx scripts/scrape/run.ts",
-    "admin:hash": "tsx scripts/admin/hash.ts",
-    "admin:secret": "tsx scripts/admin/secret.ts"
+    "admin:hash": "tsx scripts/admin/hash.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.8.0",

@@ -75,11 +75,15 @@ export function sameOrigin(request: Request): boolean {
   }
 }
 
-/** Best-effort login throttle (per server instance): 5 failures per 15 minutes per key. */
+/**
+ * Best-effort login throttle (per server instance): `limit` failures per 15
+ * minutes per key. The default of 5 is for per-email keys; callers pass a
+ * higher limit for shared keys such as an office IP.
+ */
 const attempts = new Map<string, { count: number; until: number }>();
-export function throttled(key: string, now = Date.now()): boolean {
+export function throttled(key: string, now = Date.now(), limit = 5): boolean {
   const a = attempts.get(key);
-  return !!a && a.count >= 5 && a.until > now;
+  return !!a && a.count >= limit && a.until > now;
 }
 export function noteFailure(key: string, now = Date.now()) {
   const a = attempts.get(key);

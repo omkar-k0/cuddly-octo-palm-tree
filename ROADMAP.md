@@ -170,6 +170,21 @@ verifying a few hundred sources and judgments, and approving articles.
 
 ---
 
+## Lawyer onboarding (India and Germany)
+
+Lawyers apply, the team verifies them, and approved lawyers review sources.
+The same flow serves India and Germany. Plan: `docs/lawyer-onboarding-step1.md`.
+
+1. **Accounts:** done. Database accounts, sessions, setup links, audit log, `/team`.
+2. **Application page and document upload:** framework done. `/lawyers/join`,
+   the API and `/team/applications` exist; document upload is still to do.
+3. **Team verification dashboard with decisions:** approve or reject applications.
+4. **Reviewer agreement acceptance and the scoped lawyer dashboard.**
+5. **German version.**
+6. **Security pass.**
+
+---
+
 ## V3: Germany, in parallel
 
 Same product, same four areas, German law. Built on the V1 country

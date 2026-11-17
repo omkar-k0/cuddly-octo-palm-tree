@@ -76,11 +76,6 @@ async function Dashboard({ searchParams }: { searchParams: Promise<Search> }) {
             : "No verification database is configured (set DATABASE_URL). You can read sources, but decisions cannot be saved."}
         </p>
       )}
-      {storeKind === "file" && (
-        <p className="mt-6 rounded-xl border border-foreground/15 p-4 text-sm text-muted-foreground">
-          Development mode: decisions are saved to <code className="font-mono">.data/verifications.json</code> on this machine.
-        </p>
-      )}
 
       <div className="mt-8 grid gap-px overflow-hidden rounded-xl border border-foreground/10 bg-foreground/10 sm:grid-cols-2 lg:grid-cols-4">
         {progress.map((p) => (

@@ -153,10 +153,21 @@ describe("sign-in and sessions", () => {
     expect((await signIn("lawyer@example.com", lawyer.password, { ip: ip() })).ok).toBe(true);
   });
 
-  it("throttles per IP and per email", async () => {
-    const a = ip();
-    for (let i = 0; i < 5; i++) await signIn(`x${i}@example.com`, "nope nope nope", { ip: a });
-    expect(await signIn("owner@example.com", OWNER_PW, { ip: a })).toEqual({ ok: false, error: "throttled" });
+  it("throttles per IP only after 30 failures, and per email after 5", async () => {
+    const shared = "1.1.1.1";
+    await makeUser(asActor(await owner()), "lawyer", "b@example.com");
+    for (let i = 0; i < 5; i++) await signIn("a@example.com", "nope nope nope", { ip: shared });
+    // Five failures for a@ lock a@ but do not stop b@ from the same IP.
+    expect(await signIn("a@example.com", "nope nope nope", { ip: shared })).toEqual({ ok: false, error: "throttled" });
+    expect((await signIn("b@example.com", "a long password 1", { ip: shared })).ok).toBe(true);
+    // Many different emails from one IP: blocked at 30 failures, not before.
+    resetThrottleForTests();
+    for (let i = 0; i < 29; i++) await signIn(`x${i}@example.com`, "nope nope nope", { ip: shared });
+    expect((await signIn("owner@example.com", OWNER_PW, { ip: shared })).ok).toBe(true);
+    resetThrottleForTests();
+    for (let i = 0; i < 30; i++) await signIn(`y${i}@example.com`, "nope nope nope", { ip: shared });
+    expect(await signIn("owner@example.com", OWNER_PW, { ip: shared })).toEqual({ ok: false, error: "throttled" });
+    expect(await signIn("b@example.com", "a long password 1", { ip: shared })).toEqual({ ok: false, error: "throttled" });
 
     // Five failures for one account from different IPs lock that account for 15 minutes.
     resetThrottleForTests();
@@ -270,15 +281,37 @@ describe("users", () => {
     const other = await signIn("owner@example.com", OWNER_PW, { ip: ip() });
     const mine = await signIn("owner@example.com", OWNER_PW, { ip: ip() });
     if (!other.ok || !mine.ok) throw new Error("sign-in failed");
-    // The request making the change validated its own session first.
-    await getSessionUser(mine.token);
-    expect(await changePassword(o.id, "wrong password!", "new password 456")).toEqual({ ok: false, error: "invalid_current" });
-    expect(await changePassword(o.id, OWNER_PW, "short")).toEqual({ ok: false, error: "weak_password" });
-    expect(await changePassword(o.id, OWNER_PW, "new password 456")).toEqual({ ok: true });
+    const me = await getSessionUser(mine.token);
+    expect(await changePassword(o.id, "wrong password!", "new password 456", me!.session_id)).toEqual({ ok: false, error: "invalid_current" });
+    expect(await changePassword(o.id, OWNER_PW, "short", me!.session_id)).toEqual({ ok: false, error: "weak_password" });
+    expect(await getSessionUser(other.token)).not.toBeNull();
+    expect(await changePassword(o.id, OWNER_PW, "new password 456", me!.session_id)).toEqual({ ok: true });
     expect(await getSessionUser(other.token)).toBeNull();
     expect(await getSessionUser(mine.token)).not.toBeNull();
     expect((await signIn("owner@example.com", "new password 456", { ip: ip() })).ok).toBe(true);
     expect((await signIn("owner@example.com", OWNER_PW, { ip: ip() })).ok).toBe(false);
+  });
+
+  it("changePassword keeps the session it is told to keep, not the one validated last", async () => {
+    const o = await owner();
+    const a = await signIn("owner@example.com", OWNER_PW, { ip: ip() });
+    const b = await signIn("owner@example.com", OWNER_PW, { ip: ip() });
+    if (!a.ok || !b.ok) throw new Error("sign-in failed");
+    const sessionA = await getSessionUser(a.token);
+    await getSessionUser(b.token); // B is validated last, e.g. by a near-simultaneous request
+    expect(await changePassword(o.id, OWNER_PW, "new password 456", sessionA!.session_id)).toEqual({ ok: true });
+    expect(await getSessionUser(a.token)).not.toBeNull();
+    expect(await getSessionUser(b.token)).toBeNull();
+  });
+
+  it("changePassword without keepSessionId revokes every session", async () => {
+    const o = await owner();
+    const a = await signIn("owner@example.com", OWNER_PW, { ip: ip() });
+    const b = await signIn("owner@example.com", OWNER_PW, { ip: ip() });
+    if (!a.ok || !b.ok) throw new Error("sign-in failed");
+    expect(await changePassword(o.id, OWNER_PW, "new password 456")).toEqual({ ok: true });
+    expect(await getSessionUser(a.token)).toBeNull();
+    expect(await getSessionUser(b.token)).toBeNull();
   });
 
   it("never leaves zero active owners", async () => {
