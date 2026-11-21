@@ -36,7 +36,8 @@ Small changes that make everything after cheaper, including V3.
    example the Karnataka Rent Act). Add a PDF-to-text step to the scraper,
    with a quality check that flags pages that need OCR or a human.
 4. **CI on GitHub.** A workflow that runs typecheck, lint, tests and build
-   on every pull request. Today nothing checks PRs automatically.
+   on every pull request. Added 21 Nov 2026 (`.github/workflows/ci.yml`);
+   locally all four pass (203 tests, lint 0 errors and 4 warnings).
 
 Done when: existing eval scores unchanged; CI green on a PR.
 
